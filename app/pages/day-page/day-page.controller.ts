@@ -1,27 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Temporal } from 'temporal-polyfill';
-import { categoriesRepository } from '@/repositories/categories.repository';
-import { elementsRepository } from '@/repositories/elements.repository';
-import { completionsRepository } from '@/repositories/completions.repository';
-import { scoresRepository } from '@/repositories/scores.repository';
 import {
   createZonedDateTimeString,
   parseZonedDateTimeString,
   getTodayZonedDateTimeString,
 } from '@/utils/temporal';
 import { useAuth } from '@/contexts/auth.context';
-import type { Category, Element, DailyCompletion } from '@/types';
+import { daysRepository, type DayData, type DayCategory } from '@/repositories/days.repository';
 
 export function useDayPageController() {
   const { user } = useAuth();
   const { date } = useLocalSearchParams<{ date: string }>();
   const router = useRouter();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [elements, setElements] = useState<Record<number, Element[]>>({});
-  const [completions, setCompletions] = useState<Record<number, string[]>>({});
-  const [score, setScore] = useState<number | null>(null);
+  const [dayData, setDayData] = useState<DayData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const dateZts = date
@@ -32,76 +24,59 @@ export function useDayPageController() {
       )
     : getTodayZonedDateTimeString();
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [date, user]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
 
     try {
       setLoading(true);
-      const cats = await categoriesRepository.list();
-      setCategories(cats);
-
-      const elementsMap: Record<number, Element[]> = {};
-      const completionsMap: Record<number, string[]> = {};
-
-      for (const cat of cats) {
-        const elems = await elementsRepository.list({ categoryId: cat.id });
-        elementsMap[cat.id] = elems;
-
-        for (const elem of elems) {
-          const comps = await completionsRepository.list({
-            elementId: elem.id,
-            dateZts: dateZts,
-          });
-          completionsMap[elem.id] = comps.map((c: DailyCompletion) => c.date_zts);
-        }
-      }
-
-      setElements(elementsMap);
-      setCompletions(completionsMap);
-
-      try {
-        const dailyScore = await scoresRepository.getByDate({ dateZts: dateZts });
-        setScore(dailyScore.score);
-      } catch {
-        setScore(null);
-      }
+      const dateParam = date || dateZts.split('T')[0];
+      const data = await daysRepository.getByDate({ date: dateParam });
+      setDayData(data);
     } catch (error) {
       Alert.alert('Error', 'No se pudieron cargar los datos');
       console.error(error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, date, dateZts]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user, loadData]);
 
   const handleToggleCompletion = async (elementId: number) => {
-    const isCompleted = completions[elementId]?.includes(dateZts);
+    if (!dayData) return;
+
+    const currentCompleted = dayData.categories
+      .flatMap((cat) => cat.elements)
+      .find((elem) => elem.id === elementId)?.completed ?? false;
+
+    const updatedElements = dayData.categories
+      .flatMap((cat) => cat.elements)
+      .map((elem) => ({
+        elementId: elem.id,
+        completed:
+          elem.id === elementId
+            ? currentCompleted
+              ? ('NOT_COMPLETED' as const)
+              : ('COMPLETED' as const)
+            : elem.completed
+            ? ('COMPLETED' as const)
+            : ('NOT_COMPLETED' as const),
+      }));
 
     try {
-      if (isCompleted) {
-        await completionsRepository.delete({
-          elementId,
-          dateZts: dateZts,
-        });
-        setCompletions({
-          ...completions,
-          [elementId]: (completions[elementId] || []).filter((d) => d !== dateZts),
-        });
-      } else {
-        await completionsRepository.create({
-          elementId,
-          dateZts: dateZts,
-        });
-        setCompletions({
-          ...completions,
-          [elementId]: [...(completions[elementId] || []), dateZts],
-        });
-      }
+      const dateParam = date || dateZts.split('T')[0];
+      const updated = await daysRepository.update({
+        date: dateParam,
+        data: {
+          score: dayData.score,
+          elements: updatedElements,
+        },
+      });
+      setDayData(updated);
     } catch (error) {
       Alert.alert('Error', 'No se pudo actualizar el estado');
       console.error(error);
@@ -109,12 +84,25 @@ export function useDayPageController() {
   };
 
   const handleScorePress = async (newScore: number) => {
+    if (!dayData) return;
+
+    const updatedElements = dayData.categories
+      .flatMap((cat) => cat.elements)
+      .map((elem) => ({
+        elementId: elem.id,
+        completed: elem.completed ? ('COMPLETED' as const) : ('NOT_COMPLETED' as const),
+      }));
+
     try {
-      await scoresRepository.create({
-        dateZts: dateZts,
-        score: newScore,
+      const dateParam = date || dateZts.split('T')[0];
+      const updated = await daysRepository.update({
+        date: dateParam,
+        data: {
+          score: newScore,
+          elements: updatedElements,
+        },
       });
-      setScore(newScore);
+      setDayData(updated);
     } catch (error) {
       Alert.alert('Error', 'No se pudo guardar la puntuación');
       console.error(error);
@@ -142,14 +130,27 @@ export function useDayPageController() {
   };
 
   const isElementCompleted = (elementId: number): boolean => {
-    return completions[elementId]?.includes(dateZts) ?? false;
+    if (!dayData) return false;
+    return (
+      dayData.categories
+        .flatMap((cat) => cat.elements)
+        .find((elem) => elem.id === elementId)?.completed ?? false
+    );
   };
+
+  const categories = dayData?.categories ?? [];
+  const elements: Record<number, DayCategory['elements']> = {};
+  if (dayData) {
+    dayData.categories.forEach((cat) => {
+      elements[cat.id] = cat.elements;
+    });
+  }
 
   return {
     loading,
     categories,
     elements,
-    score,
+    score: dayData?.score ?? null,
     dateZts,
     formatDate,
     isElementCompleted,

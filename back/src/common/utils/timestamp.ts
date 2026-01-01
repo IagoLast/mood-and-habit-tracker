@@ -27,3 +27,8 @@ export function createZonedDateTimeString(
 export function parseZonedDateTimeString(dateZts: string): Temporal.ZonedDateTime {
   return Temporal.ZonedDateTime.from(dateZts);
 }
+
+export function dateStringToDateZts(dateString: string): string {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return createZonedDateTimeString(year, month, day);
+}
