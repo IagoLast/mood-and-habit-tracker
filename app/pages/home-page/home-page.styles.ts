@@ -21,6 +21,9 @@ export const styles = StyleSheet.create({
   yearButton: {
     padding: 4,
   },
+  todayButton: {
+    padding: 4,
+  },
   loadingText: {
     textAlign: 'center',
     marginTop: 20,

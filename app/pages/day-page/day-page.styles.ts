@@ -7,6 +7,9 @@ export const styles = StyleSheet.create({
   backButton: {
     padding: 4,
   },
+  dateButton: {
+    padding: 4,
+  },
   scrollView: {
     flex: 1,
   },

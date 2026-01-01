@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { commonStyles } from '@/constants/common.styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { DatePickerModal } from '@/components/date-picker-modal';
 import { DayCategoryView } from './components/day-category/day-category.view';
 import { useDayPageController } from './day-page.controller';
 import { styles } from './day-page.styles';
@@ -15,10 +16,15 @@ export function DayPageView() {
     categories,
     score,
     dateZts,
+    datePickerVisible,
     formatDate,
     handleToggleCompletion,
     handleScorePress,
     handleGoBack,
+    handleSelectDate,
+    handleConfirmDate,
+    handleCancelDatePicker,
+    getCurrentDateString,
   } = useDayPageController();
 
   if (loading) {
@@ -36,7 +42,9 @@ export function DayPageView() {
           <Ionicons name="arrow-back" size={24} color={colors.tint} />
         </TouchableOpacity>
         <Text style={[commonStyles.headerTitle, { color: colors.text, textTransform: 'capitalize' }]}>{formatDate(dateZts)}</Text>
-        <View style={commonStyles.placeholder} />
+        <TouchableOpacity onPress={handleSelectDate} style={styles.dateButton}>
+          <Ionicons name="calendar" size={24} color={colors.tint} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView}>
@@ -82,6 +90,13 @@ export function DayPageView() {
           ))
         )}
       </ScrollView>
+
+      <DatePickerModal
+        visible={datePickerVisible}
+        currentDate={getCurrentDateString()}
+        onSelectDate={handleConfirmDate}
+        onCancel={handleCancelDatePicker}
+      />
     </View>
   );
 }

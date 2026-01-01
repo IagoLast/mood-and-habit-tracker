@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { YearView } from '@/components/year-view';
+import { YearPickerModal } from '@/components/year-picker-modal';
 import { Colors } from '@/constants/theme';
 import { commonStyles } from '@/constants/common.styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -15,9 +16,12 @@ export function HomePageView() {
     scores,
     selectedYear,
     todayZts,
+    yearPickerVisible,
     handleDayPress,
-    handlePreviousYear,
-    handleNextYear,
+    handleYearPress,
+    handleSelectYear,
+    handleCancelYearPicker,
+    handleGoToToday,
   } = useHomePageController();
 
   if (loading) {
@@ -31,12 +35,12 @@ export function HomePageView() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[commonStyles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
-        <TouchableOpacity style={styles.yearButton} onPress={handlePreviousYear}>
-          <Ionicons name="chevron-back" size={24} color={colors.tint} />
+        <View style={commonStyles.placeholder} />
+        <TouchableOpacity onPress={handleYearPress}>
+          <Text style={[commonStyles.headerTitle, { color: colors.text }]}>{selectedYear}</Text>
         </TouchableOpacity>
-        <Text style={[commonStyles.headerTitle, { color: colors.text }]}>{selectedYear}</Text>
-        <TouchableOpacity style={styles.yearButton} onPress={handleNextYear}>
-          <Ionicons name="chevron-forward" size={24} color={colors.tint} />
+        <TouchableOpacity style={styles.todayButton} onPress={handleGoToToday}>
+          <Ionicons name="today" size={24} color={colors.tint} />
         </TouchableOpacity>
       </View>
 
@@ -45,6 +49,13 @@ export function HomePageView() {
           <YearView year={selectedYear} scores={scores} onDayPress={handleDayPress} />
         </View>
       </View>
+
+      <YearPickerModal
+        visible={yearPickerVisible}
+        currentYear={selectedYear}
+        onSelectYear={handleSelectYear}
+        onCancel={handleCancelYearPicker}
+      />
     </View>
   );
 }

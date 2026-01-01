@@ -14,6 +14,7 @@ export function useHomePageController() {
   const [selectedYear, setSelectedYear] = useState(today.year);
   const [scores, setScores] = useState<DailyScore[]>([]);
   const [loading, setLoading] = useState(true);
+  const [yearPickerVisible, setYearPickerVisible] = useState(false);
 
   const loadScores = useCallback(async () => {
     if (!user) return;
@@ -67,12 +68,24 @@ export function useHomePageController() {
     router.push(`/day/${dateString}`);
   };
 
-  const handlePreviousYear = () => {
-    setSelectedYear(selectedYear - 1);
+  const handleYearPress = () => {
+    setYearPickerVisible(true);
   };
 
-  const handleNextYear = () => {
-    setSelectedYear(selectedYear + 1);
+  const handleSelectYear = (year: number) => {
+    setSelectedYear(year);
+    setYearPickerVisible(false);
+  };
+
+  const handleCancelYearPicker = () => {
+    setYearPickerVisible(false);
+  };
+
+  const handleGoToToday = () => {
+    const todayZts = getTodayZonedDateTimeString();
+    const zonedDateTime = Temporal.ZonedDateTime.from(todayZts);
+    const dateString = zonedDateTime.toPlainDate().toString();
+    router.push(`/day/${dateString}`);
   };
 
   const todayZts = getTodayZonedDateTimeString();
@@ -82,8 +95,11 @@ export function useHomePageController() {
     scores,
     selectedYear,
     todayZts,
+    yearPickerVisible,
     handleDayPress,
-    handlePreviousYear,
-    handleNextYear,
+    handleYearPress,
+    handleSelectYear,
+    handleCancelYearPicker,
+    handleGoToToday,
   };
 }
