@@ -1,5 +1,3 @@
-import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
 import axios from 'axios';
 import { authService } from '@/services/auth.service';
 
@@ -12,8 +10,8 @@ export const client = axios.create({
   },
 });
 
-client.interceptors.request.use(async config => {
-  const token = await authService.getToken();
+client.interceptors.request.use(config => {
+  const token = authService.getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -22,9 +20,9 @@ client.interceptors.request.use(async config => {
 
 client.interceptors.response.use(
   response => response,
-  async error => {
+  error => {
     if (error.response?.status === 401) {
-      await authService.clearToken();
+      authService.clearAuth();
     }
     return Promise.reject(error);
   }
