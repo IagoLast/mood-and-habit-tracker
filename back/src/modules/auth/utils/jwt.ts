@@ -1,5 +1,3 @@
-import { SignJWT, jwtVerify } from 'jose';
-
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 );
@@ -9,7 +7,17 @@ export interface JWTPayload {
   userId: string;
 }
 
+let joseModule: typeof import('jose') | null = null;
+
+async function getJoseModule() {
+  if (!joseModule) {
+    joseModule = await import('jose');
+  }
+  return joseModule;
+}
+
 export async function generateToken(userId: string): Promise<string> {
+  const { SignJWT } = await getJoseModule();
   return new SignJWT({ userId })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -19,6 +27,7 @@ export async function generateToken(userId: string): Promise<string> {
 
 export async function verifyToken(token: string): Promise<JWTPayload> {
   try {
+    const { jwtVerify } = await getJoseModule();
     const { payload } = await jwtVerify(token, JWT_SECRET);
     return { userId: payload.userId as string };
   } catch {
