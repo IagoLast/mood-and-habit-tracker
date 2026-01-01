@@ -5,7 +5,7 @@ import type { User } from '@/types';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: () => Promise<void>;
+  login: (loginFn: () => Promise<{ token: string; user: User }>) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
@@ -33,9 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async () => {
+  const login = async (loginFn: () => Promise<{ token: string; user: User }>) => {
     try {
-      const { user: loggedInUser } = await authService.loginWithGoogle();
+      const { user: loggedInUser } = await loginFn();
       setUser(loggedInUser);
     } catch (error) {
       console.error('Error logging in:', error);

@@ -7,26 +7,42 @@ node_modules/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
-# Build outputs
-dist/
-build/
-out/
-.next/
-*.tsbuildinfo
-
-# Testing
-coverage/
-.nyc_output/
-*.test-db-config.json
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Environment variables
 .env
 .env.local
 .env*.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.development
+.env.production
+.env.test
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Expo
+.expo/
+expo-env.d.ts
+web-build/
+ios/
+android/
+.expo-shared/
+
+# NestJS
+dist/
+*.js.map
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+.test-db-config.json
 
 # Logs
 logs/
@@ -45,61 +61,44 @@ lerna-debug.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
-*.swp
-*.swo
-*~
+*.pem
+*.orig.*
 
 # IDE
 .vscode/
 .idea/
-*.iml
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
 *.sublime-project
 *.sublime-workspace
-*.code-workspace
 
-# Expo / React Native
-.expo/
-.expo-shared/
-web-build/
-ios/
-android/
-*.orig.*
+# Docker
+docker-compose.override.yml
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.temp/
+
+# Native files
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+.kotlin/
+
+# Metro bundler
 .metro-health-check*
-expo-env.d.ts
-
-# NestJS
-dist/
-
-# Docker
-*.pid
-*.seed
-*.pid.lock
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# Database
-*.sqlite
-*.sqlite3
-*.db
-
-# Certificates
-*.pem
-*.crt
-*.key
 
 # Vercel
 .vercel
 
 # Misc
-.cache/
-.parcel-cache/
-.eslintcache
-.stylelintcache
+*.pem
+app-example

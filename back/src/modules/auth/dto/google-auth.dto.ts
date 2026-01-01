@@ -11,5 +11,9 @@ export class GoogleAuthDto {
 
   @IsOptional()
   @IsString()
+  codeVerifier?: string;
+
+  @IsOptional()
+  @IsString()
   googleToken?: string;
 }

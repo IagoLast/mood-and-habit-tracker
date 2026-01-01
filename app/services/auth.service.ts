@@ -1,29 +1,18 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
-import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { client } from '@/client/api-client';
 import type { User } from '@/types';
 
-WebBrowser.maybeCompleteAuthSession();
-
 const TOKEN_STORAGE_KEY = 'auth_token';
 const USER_STORAGE_KEY = 'auth_user';
-
-const GOOGLE_CLIENT_ID = Constants.expoConfig?.extra?.googleClientId || 
-  process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
-
-const discovery = {
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-  revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-};
 
 export const authService = {
   async getToken(): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+      if (Platform.OS === 'web') {
+        return localStorage.getItem(TOKEN_STORAGE_KEY);
+      }
+      return await SecureStore.getItemAsync(TOKEN_STORAGE_KEY);
     } catch (error) {
       console.error('Error getting token:', error);
       return null;
@@ -32,7 +21,11 @@ export const authService = {
 
   async setToken(token: string): Promise<void> {
     try {
-      await AsyncStorage.setItem(TOKEN_STORAGE_KEY, token);
+      if (Platform.OS === 'web') {
+        localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      } else {
+        await SecureStore.setItemAsync(TOKEN_STORAGE_KEY, token);
+      }
     } catch (error) {
       console.error('Error setting token:', error);
       throw error;
@@ -41,8 +34,13 @@ export const authService = {
 
   async clearToken(): Promise<void> {
     try {
-      await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
-      await AsyncStorage.removeItem(USER_STORAGE_KEY);
+      if (Platform.OS === 'web') {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        localStorage.removeItem(USER_STORAGE_KEY);
+      } else {
+        await SecureStore.deleteItemAsync(TOKEN_STORAGE_KEY);
+        await SecureStore.deleteItemAsync(USER_STORAGE_KEY);
+      }
     } catch (error) {
       console.error('Error clearing token:', error);
       throw error;
@@ -51,7 +49,12 @@ export const authService = {
 
   async getUser(): Promise<User | null> {
     try {
-      const userJson = await AsyncStorage.getItem(USER_STORAGE_KEY);
+      let userJson: string | null;
+      if (Platform.OS === 'web') {
+        userJson = localStorage.getItem(USER_STORAGE_KEY);
+      } else {
+        userJson = await SecureStore.getItemAsync(USER_STORAGE_KEY);
+      }
       return userJson ? JSON.parse(userJson) : null;
     } catch (error) {
       console.error('Error getting user:', error);
@@ -61,7 +64,12 @@ export const authService = {
 
   async setUser(user: User): Promise<void> {
     try {
-      await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      const userJson = JSON.stringify(user);
+      if (Platform.OS === 'web') {
+        localStorage.setItem(USER_STORAGE_KEY, userJson);
+      } else {
+        await SecureStore.setItemAsync(USER_STORAGE_KEY, userJson);
+      }
     } catch (error) {
       console.error('Error setting user:', error);
       throw error;
@@ -73,59 +81,12 @@ export const authService = {
     return token !== null;
   },
 
-  async loginWithGoogle(): Promise<{ token: string; user: User }> {
-    if (!GOOGLE_CLIENT_ID) {
-      throw new Error('Google Client ID not configured');
-    }
-
-    const redirectUri = AuthSession.makeRedirectUri({
-      useProxy: true,
-    });
-
-    const platform = Platform.OS === 'web' ? 'Web' : 'Mobile';
-    
-    console.log('\n═══════════════════════════════════════════════════════════');
-    console.log('🔗 REDIRECT URI PARA GOOGLE CONSOLE:');
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log(`Plataforma: ${platform}`);
-    console.log(`Redirect URI: ${redirectUri}`);
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log('📝 INSTRUCCIONES:');
-    console.log('1. Copia el URI de arriba EXACTAMENTE');
-    console.log('2. Ve a: https://console.cloud.google.com/apis/credentials');
-    console.log('3. Selecciona tu proyecto');
-    console.log('4. Abre tu OAuth 2.0 Client ID');
-    console.log('5. En "Authorized redirect URIs", haz clic en "+ ADD URI"');
-    console.log('6. Pega el URI copiado');
-    console.log('7. Haz clic en "SAVE"');
-    console.log('⚠️  IMPORTANTE: El URI debe coincidir EXACTAMENTE');
-    if (platform === 'Web') {
-      console.log('💡 NOTA: En web, el redirect URI suele ser tu URL actual');
-      console.log('   (ej: http://localhost:8081 o https://tu-dominio.com)');
-    }
-    console.log('═══════════════════════════════════════════════════════════\n');
-
-    const request = new AuthSession.AuthRequest({
-      clientId: GOOGLE_CLIENT_ID,
-      scopes: ['openid', 'profile', 'email'],
-      responseType: AuthSession.ResponseType.Code,
+  async exchangeCodeForToken(code: string, redirectUri: string, codeVerifier?: string): Promise<{ token: string; user: User }> {
+    const response = await client.post('/api/auth/google', { 
+      code, 
       redirectUri,
-      extraParams: {},
-      usePKCE: false,
+      codeVerifier,
     });
-
-    const result = await request.promptAsync(discovery);
-
-    if (result.type !== 'success') {
-      throw new Error('Google authentication cancelled or failed');
-    }
-
-    const { code } = result.params;
-    if (!code) {
-      throw new Error('No authorization code received from Google');
-    }
-
-    const response = await client.post('/api/auth/google', { code, redirectUri });
     const { token, user } = response.data;
 
     await this.setToken(token);

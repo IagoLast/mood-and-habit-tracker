@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,20 +6,33 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '@/contexts/auth.context';
+import { useGoogleAuth } from '@/hooks/use-google-auth';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { login: googleLogin, isLoading: isAuthRequestLoading } = useGoogleAuth();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      WebBrowser.warmUpAsync();
+      return () => {
+        WebBrowser.coolDownAsync();
+      };
+    }
+  }, []);
 
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
-      await login();
+      await login(googleLogin);
       router.replace('/(tabs)');
     } catch (error) {
       console.error('Login error:', error);
@@ -32,6 +45,8 @@ export default function LoginScreen() {
     }
   };
 
+  const isButtonDisabled = loading || isAuthRequestLoading;
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -40,11 +55,11 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>Inicia sesión para continuar</Text>
 
         <TouchableOpacity
-          style={[styles.googleButton, loading && styles.buttonDisabled]}
+          style={[styles.googleButton, isButtonDisabled && styles.buttonDisabled]}
           onPress={handleGoogleLogin}
-          disabled={loading}
+          disabled={isButtonDisabled}
         >
-          {loading ? (
+          {loading || isAuthRequestLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <>

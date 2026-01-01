@@ -5,6 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { GoogleAuthDto } from '../dto/google-auth.dto';
 import { generateToken } from '../utils/jwt';
 import { getCurrentTimestampMs } from '../../../common/utils/timestamp';
+import { InitializeDefaultCategoriesService } from '../../categories/services/initialize-default-categories.service';
 
 export interface GoogleAuthResult {
   token: string;
@@ -20,7 +21,10 @@ export class GoogleAuthService {
   private readonly logger = new Logger(GoogleAuthService.name);
   private client: OAuth2Client;
 
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {
+  constructor(
+    @Inject('DATABASE_POOL') private readonly pool: Pool,
+    private readonly initializeDefaultCategoriesService: InitializeDefaultCategoriesService,
+  ) {
     this.client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
@@ -29,16 +33,22 @@ export class GoogleAuthService {
   }
 
   async execute(params: GoogleAuthDto): Promise<GoogleAuthResult> {
-    const { code, redirectUri, googleToken } = params;
+    const { code, redirectUri, codeVerifier, googleToken } = params;
 
     let payload;
 
     if (code && redirectUri) {
       try {
-        const { tokens } = await this.client.getToken({
+        const tokenOptions: any = {
           code,
           redirect_uri: redirectUri,
-        });
+        };
+
+        if (codeVerifier) {
+          tokenOptions.code_verifier = codeVerifier;
+        }
+
+        const { tokens } = await this.client.getToken(tokenOptions);
 
         if (!tokens.id_token) {
           throw new UnauthorizedException('No ID token received from Google');
@@ -111,6 +121,8 @@ export class GoogleAuthService {
         [email, name, googleId, now, now]
       );
       user = result.rows[0];
+
+      await this.initializeDefaultCategoriesService.execute({ userId: user.id });
     }
 
     const token = await generateToken(user.id);

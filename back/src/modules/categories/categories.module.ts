@@ -5,6 +5,7 @@ import { CreateCategoryService } from './services/create-category.service';
 import { GetCategoryService } from './services/get-category.service';
 import { UpdateCategoryService } from './services/update-category.service';
 import { DeleteCategoryService } from './services/delete-category.service';
+import { InitializeDefaultCategoriesService } from './services/initialize-default-categories.service';
 
 @Module({
   controllers: [CategoriesController],
@@ -14,6 +15,8 @@ import { DeleteCategoryService } from './services/delete-category.service';
     GetCategoryService,
     UpdateCategoryService,
     DeleteCategoryService,
+    InitializeDefaultCategoriesService,
   ],
+  exports: [InitializeDefaultCategoriesService],
 })
 export class CategoriesModule {}

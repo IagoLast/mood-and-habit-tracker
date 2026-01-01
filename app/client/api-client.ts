@@ -1,7 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import axios from 'axios';
+import { authService } from '@/services/auth.service';
 
-const TOKEN_STORAGE_KEY = 'auth_token';
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 export const client = axios.create({
@@ -12,7 +13,7 @@ export const client = axios.create({
 });
 
 client.interceptors.request.use(async config => {
-  const token = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+  const token = await authService.getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -23,7 +24,7 @@ client.interceptors.response.use(
   response => response,
   async error => {
     if (error.response?.status === 401) {
-      await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+      await authService.clearToken();
     }
     return Promise.reject(error);
   }

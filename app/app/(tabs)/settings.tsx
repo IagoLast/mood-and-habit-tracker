@@ -8,6 +8,7 @@ import {
   TextInput,
   Modal,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { categoriesRepository } from '@/repositories/categories.repository';
@@ -58,7 +59,11 @@ export default function SettingsScreen() {
       }
       setElements(elementsMap);
     } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar los datos');
+      if (Platform.OS === 'web') {
+        window.alert('No se pudieron cargar los datos');
+      } else {
+        Alert.alert('Error', 'No se pudieron cargar los datos');
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -67,7 +72,11 @@ export default function SettingsScreen() {
 
   const handleCreateCategory = async () => {
     if (!categoryName.trim()) {
-      Alert.alert('Error', 'El nombre de la categoría no puede estar vacío');
+      if (Platform.OS === 'web') {
+        window.alert('El nombre de la categoría no puede estar vacío');
+      } else {
+        Alert.alert('Error', 'El nombre de la categoría no puede estar vacío');
+      }
       return;
     }
 
@@ -80,14 +89,22 @@ export default function SettingsScreen() {
       setCategoryName('');
       setCategoryModalVisible(false);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo crear la categoría');
+      if (Platform.OS === 'web') {
+        window.alert('No se pudo crear la categoría');
+      } else {
+        Alert.alert('Error', 'No se pudo crear la categoría');
+      }
       console.error(error);
     }
   };
 
   const handleUpdateCategory = async () => {
     if (!editingCategory || !categoryName.trim()) {
-      Alert.alert('Error', 'El nombre de la categoría no puede estar vacío');
+      if (Platform.OS === 'web') {
+        window.alert('El nombre de la categoría no puede estar vacío');
+      } else {
+        Alert.alert('Error', 'El nombre de la categoría no puede estar vacío');
+      }
       return;
     }
 
@@ -101,40 +118,58 @@ export default function SettingsScreen() {
       setEditingCategory(null);
       setCategoryModalVisible(false);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo actualizar la categoría');
+      if (Platform.OS === 'web') {
+        window.alert('No se pudo actualizar la categoría');
+      } else {
+        Alert.alert('Error', 'No se pudo actualizar la categoría');
+      }
       console.error(error);
     }
   };
 
   const handleDeleteCategory = async (categoryId: number) => {
-    Alert.alert(
-      'Confirmar eliminación',
-      '¿Estás seguro de que quieres eliminar esta categoría? Se eliminarán también todas sus tareas.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await categoriesRepository.delete({ id: categoryId });
-              setCategories(categories.filter(c => c.id !== categoryId));
-              const newElements = { ...elements };
-              delete newElements[categoryId];
-              setElements(newElements);
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar la categoría');
-              console.error(error);
-            }
-          },
-        },
-      ]
-    );
+    const confirmDelete = Platform.OS === 'web'
+      ? window.confirm('¿Estás seguro de que quieres eliminar esta categoría? Se eliminarán también todas sus tareas.')
+      : await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Confirmar eliminación',
+            '¿Estás seguro de que quieres eliminar esta categoría? Se eliminarán también todas sus tareas.',
+            [
+              { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+              {
+                text: 'Eliminar',
+                style: 'destructive',
+                onPress: () => resolve(true),
+              },
+            ]
+          );
+        });
+
+    if (confirmDelete) {
+      try {
+        await categoriesRepository.delete({ id: categoryId });
+        setCategories(categories.filter(c => c.id !== categoryId));
+        const newElements = { ...elements };
+        delete newElements[categoryId];
+        setElements(newElements);
+      } catch (error) {
+        if (Platform.OS === 'web') {
+          window.alert('No se pudo eliminar la categoría');
+        } else {
+          Alert.alert('Error', 'No se pudo eliminar la categoría');
+        }
+        console.error(error);
+      }
+    }
   };
 
   const handleCreateElement = async () => {
     if (!selectedCategoryForElement || !elementName.trim()) {
-      Alert.alert('Error', 'El nombre de la tarea no puede estar vacío');
+      if (Platform.OS === 'web') {
+        window.alert('El nombre de la tarea no puede estar vacío');
+      } else {
+        Alert.alert('Error', 'El nombre de la tarea no puede estar vacío');
+      }
       return;
     }
 
@@ -153,14 +188,22 @@ export default function SettingsScreen() {
       setSelectedCategoryForElement(null);
       setElementModalVisible(false);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo crear la tarea');
+      if (Platform.OS === 'web') {
+        window.alert('No se pudo crear la tarea');
+      } else {
+        Alert.alert('Error', 'No se pudo crear la tarea');
+      }
       console.error(error);
     }
   };
 
   const handleUpdateElement = async () => {
     if (!editingElement || !elementName.trim()) {
-      Alert.alert('Error', 'El nombre de la tarea no puede estar vacío');
+      if (Platform.OS === 'web') {
+        window.alert('El nombre de la tarea no puede estar vacío');
+      } else {
+        Alert.alert('Error', 'El nombre de la tarea no puede estar vacío');
+      }
       return;
     }
 
@@ -181,35 +224,49 @@ export default function SettingsScreen() {
       setEditingElement(null);
       setElementModalVisible(false);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo actualizar la tarea');
+      if (Platform.OS === 'web') {
+        window.alert('No se pudo actualizar la tarea');
+      } else {
+        Alert.alert('Error', 'No se pudo actualizar la tarea');
+      }
       console.error(error);
     }
   };
 
   const handleDeleteElement = async (elementId: number, categoryId: number) => {
-    Alert.alert(
-      'Confirmar eliminación',
-      '¿Estás seguro de que quieres eliminar esta tarea?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await elementsRepository.delete({ id: elementId });
-              setElements({
-                ...elements,
-                [categoryId]: (elements[categoryId] || []).filter(e => e.id !== elementId),
-              });
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar la tarea');
-              console.error(error);
-            }
-          },
-        },
-      ]
-    );
+    const confirmDelete = Platform.OS === 'web'
+      ? window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')
+      : await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Confirmar eliminación',
+            '¿Estás seguro de que quieres eliminar esta tarea?',
+            [
+              { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+              {
+                text: 'Eliminar',
+                style: 'destructive',
+                onPress: () => resolve(true),
+              },
+            ]
+          );
+        });
+
+    if (confirmDelete) {
+      try {
+        await elementsRepository.delete({ id: elementId });
+        setElements({
+          ...elements,
+          [categoryId]: (elements[categoryId] || []).filter(e => e.id !== elementId),
+        });
+      } catch (error) {
+        if (Platform.OS === 'web') {
+          window.alert('No se pudo eliminar la tarea');
+        } else {
+          Alert.alert('Error', 'No se pudo eliminar la tarea');
+        }
+        console.error(error);
+      }
+    }
   };
 
   const openCategoryModal = (category?: Category) => {

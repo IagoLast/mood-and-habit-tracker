@@ -129,13 +129,83 @@ describe('CategoriesController (e2e)', () => {
       );
       const categoryId = result.rows[0].id;
 
+      const response = await getRequest(app)
+        .delete(`/api/categories/${categoryId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.message).toBe('Category deleted successfully');
+
+      const checkResult = await pool.query('SELECT * FROM categories WHERE id = $1', [categoryId]);
+      expect(checkResult.rows.length).toBe(0);
+    });
+
+    it('should return 404 if category not found', async () => {
+      await getRequest(app)
+        .delete('/api/categories/999999')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(404);
+    });
+
+    it('should not delete category from another user', async () => {
+      const otherUser = await createTestUser(pool);
+      const uniqueName = `Category_${Date.now()}`;
+      const result = await pool.query(
+        `INSERT INTO categories (name, user_id, created_at_timestamp_ms, updated_at_timestamp_ms)
+         VALUES ($1, $2, $3, $4) RETURNING id`,
+        [uniqueName, otherUser.userId, Date.now(), Date.now()]
+      );
+      const categoryId = result.rows[0].id;
+
+      await getRequest(app)
+        .delete(`/api/categories/${categoryId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(404);
+
+      const checkResult = await pool.query('SELECT * FROM categories WHERE id = $1', [categoryId]);
+      expect(checkResult.rows.length).toBe(1);
+    });
+
+    it('should cascade delete elements when deleting a category', async () => {
+      const uniqueName = `Category_${Date.now()}`;
+      const categoryResult = await pool.query(
+        `INSERT INTO categories (name, user_id, created_at_timestamp_ms, updated_at_timestamp_ms)
+         VALUES ($1, $2, $3, $4) RETURNING id`,
+        [uniqueName, userId, Date.now(), Date.now()]
+      );
+      const categoryId = categoryResult.rows[0].id;
+
+      const elementResult1 = await pool.query(
+        `INSERT INTO elements (name, category_id, created_at_timestamp_ms, updated_at_timestamp_ms)
+         VALUES ($1, $2, $3, $4) RETURNING id`,
+        [`Element1_${Date.now()}`, categoryId, Date.now(), Date.now()]
+      );
+      const elementId1 = elementResult1.rows[0].id;
+
+      const elementResult2 = await pool.query(
+        `INSERT INTO elements (name, category_id, created_at_timestamp_ms, updated_at_timestamp_ms)
+         VALUES ($1, $2, $3, $4) RETURNING id`,
+        [`Element2_${Date.now()}`, categoryId, Date.now(), Date.now()]
+      );
+      const elementId2 = elementResult2.rows[0].id;
+
       await getRequest(app)
         .delete(`/api/categories/${categoryId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      const checkResult = await pool.query('SELECT * FROM categories WHERE id = $1', [categoryId]);
-      expect(checkResult.rows.length).toBe(0);
+      const categoryCheck = await pool.query('SELECT * FROM categories WHERE id = $1', [categoryId]);
+      expect(categoryCheck.rows.length).toBe(0);
+
+      const elementsCheck = await pool.query('SELECT * FROM elements WHERE category_id = $1', [categoryId]);
+      expect(elementsCheck.rows.length).toBe(0);
+
+      const element1Check = await pool.query('SELECT * FROM elements WHERE id = $1', [elementId1]);
+      expect(element1Check.rows.length).toBe(0);
+
+      const element2Check = await pool.query('SELECT * FROM elements WHERE id = $1', [elementId2]);
+      expect(element2Check.rows.length).toBe(0);
     });
   });
 });
