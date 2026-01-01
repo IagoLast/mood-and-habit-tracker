@@ -31,8 +31,8 @@ export const authService = {
     return this.getToken() !== null;
   },
 
-  async loginWithGoogleToken(googleToken: string): Promise<{ token: string; user: User }> {
-    const response = await client.post('/api/auth/google', { googleToken });
+  async exchangeCodeForToken(code: string, redirectUri: string): Promise<{ token: string; user: User }> {
+    const response = await client.post('/api/auth/google', { code, redirectUri });
     const { token, user } = response.data;
     
     this.setToken(token);

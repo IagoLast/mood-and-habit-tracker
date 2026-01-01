@@ -1,82 +1,84 @@
-import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
-import Constants from 'expo-constants';
 import { authService } from '@/services/auth.service';
 import type { User } from '@/types';
 
-WebBrowser.maybeCompleteAuthSession();
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
+const REDIRECT_URI = process.env.EXPO_PUBLIC_REDIRECT_URI || window.location.origin;
 
-const GOOGLE_CLIENT_ID = Constants.expoConfig?.extra?.googleClientId || 
-  process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
+function generateState(): string {
+  return Math.random().toString(36).substring(2, 15);
+}
 
-const discovery = {
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-  revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-};
-
-async function exchangeCodeWithGoogle(code: string, codeVerifier: string, redirectUri: string): Promise<string> {
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      code,
-      code_verifier: codeVerifier,
-      grant_type: 'authorization_code',
-      redirect_uri: redirectUri,
-    }).toString(),
+function buildGoogleAuthUrl(state: string): string {
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state,
+    prompt: 'select_account',
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error_description || error.error);
-  }
-
-  const data = await response.json();
-  if (!data.id_token) {
-    throw new Error('No id_token received from Google');
-  }
-
-  return data.id_token;
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
 export function useGoogleAuth() {
-  const redirectUri = AuthSession.makeRedirectUri();
-
-  const [request, , promptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: GOOGLE_CLIENT_ID,
-      scopes: ['openid', 'profile', 'email'],
-      responseType: AuthSession.ResponseType.Code,
-      redirectUri,
-      usePKCE: true,
-    },
-    discovery
-  );
-
   const login = async (): Promise<{ token: string; user: User }> => {
-    if (!request || !request.codeVerifier) {
-      throw new Error('Auth request not ready');
-    }
+    return new Promise((resolve, reject) => {
+      const state = generateState();
+      sessionStorage.setItem('oauth_state', state);
 
-    const result = await promptAsync();
+      const authUrl = buildGoogleAuthUrl(state);
+      const popup = window.open(authUrl, 'google-auth', 'width=500,height=600');
 
-    if (result.type !== 'success' || !result.params.code) {
-      throw new Error('Google authentication failed');
-    }
+      if (!popup) {
+        reject(new Error('Popup blocked'));
+        return;
+      }
 
-    const idToken = await exchangeCodeWithGoogle(
-      result.params.code,
-      request.codeVerifier,
-      request.redirectUri || redirectUri
-    );
+      const checkPopup = setInterval(() => {
+        try {
+          if (popup.closed) {
+            clearInterval(checkPopup);
+            reject(new Error('Popup closed'));
+            return;
+          }
 
-    return authService.loginWithGoogleToken(idToken);
+          const popupUrl = popup.location.href;
+          if (popupUrl.startsWith(REDIRECT_URI)) {
+            clearInterval(checkPopup);
+            popup.close();
+
+            const url = new URL(popupUrl);
+            const code = url.searchParams.get('code');
+            const returnedState = url.searchParams.get('state');
+            const error = url.searchParams.get('error');
+
+            if (error) {
+              reject(new Error(error));
+              return;
+            }
+
+            if (returnedState !== sessionStorage.getItem('oauth_state')) {
+              reject(new Error('State mismatch'));
+              return;
+            }
+
+            if (!code) {
+              reject(new Error('No code received'));
+              return;
+            }
+
+            sessionStorage.removeItem('oauth_state');
+
+            authService.exchangeCodeForToken(code, REDIRECT_URI)
+              .then(resolve)
+              .catch(reject);
+          }
+        } catch {
+          // Cross-origin error - popup still on Google domain
+        }
+      }, 100);
+    });
   };
 
-  return {
-    login,
-    isLoading: !request,
-  };
+  return { login, isLoading: false };
 }
