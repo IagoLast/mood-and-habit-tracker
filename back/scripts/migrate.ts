@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 
-const envFile = process.env.DOTENV_CONFIG_PATH || '.env.production';
+const envFile = process.env.DOTENV_CONFIG_PATH || (fs.existsSync('.env.local') ? '.env.local' : '.env.production');
 dotenv.config({ path: envFile });
 
 async function runMigrations() {

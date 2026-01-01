@@ -57,6 +57,7 @@ export class InitializeDefaultCategoriesService {
         elements: [
           { name: 'Leer', iconName: 'book' },
           { name: 'Escribir', iconName: 'create' },
+          { name: 'Guitarra', iconName: 'MaterialCommunityIcons:guitar-electric' },
         ],
       },
       {

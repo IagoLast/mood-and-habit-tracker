@@ -7,11 +7,11 @@ export const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 2,
   },
   yearContainer: {
-    marginVertical: 16,
-    padding: 16,
+    marginVertical: 2,
+    padding: 2,
     borderRadius: 12,
     flex: 1,
     minHeight: 0,

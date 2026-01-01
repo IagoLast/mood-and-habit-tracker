@@ -15,27 +15,56 @@ const getScoreColor = (score: number | undefined, isDark: boolean): string => {
     return isDark ? '#161b22' : '#ebedf0';
   }
   
-  // RdYlGn (Red-Yellow-Green) scale similar to D3
-  // Red (low) -> Yellow (medium) -> Green (high)
-  if (score >= 9) return isDark ? '#2ea043' : '#1a9850'; // Dark green
-  if (score >= 7) return isDark ? '#3fb950' : '#66bd63'; // Light green
-  if (score >= 5) return isDark ? '#d4a017' : '#fee08b'; // Yellow (darker in dark mode for better contrast)
-  if (score >= 3) return isDark ? '#d97706' : '#fdae61'; // Orange/Yellow-orange (darker in dark mode)
-  if (score >= 1) return isDark ? '#f85149' : '#d73027'; // Red
-  return isDark ? '#161b22' : '#ebedf0';
+  // Pastel color scale: 10 colors from red (low) to green (high)
+  // Each score (1-10) maps to a specific pastel color (more saturated)
+  const pastelColors = {
+    light: [
+      '#ff9aa2', // 1 - Saturated pink/red
+      '#ffb3a3', // 2 - Saturated coral
+      '#ffcc9a', // 3 - Saturated peach
+      '#ffe59a', // 4 - Saturated orange
+      '#fff19a', // 5 - Saturated yellow-orange
+      '#ffff9a', // 6 - Saturated yellow
+      '#e6ff9a', // 7 - Saturated yellow-green
+      '#ccff9a', // 8 - Saturated green-yellow
+      '#9affb3', // 9 - Saturated green
+      '#9affcc', // 10 - Saturated light green
+    ],
+    dark: [
+      '#cc4a5a', // 1 - Darker saturated red
+      '#d45a5a', // 2 - Darker saturated red-orange
+      '#e67a4a', // 3 - Darker saturated orange
+      '#f29a4a', // 4 - Darker saturated orange-yellow
+      '#ffba4a', // 5 - Darker saturated yellow-orange
+      '#ffda4a', // 6 - Darker saturated yellow
+      '#e6da4a', // 7 - Darker saturated yellow-green
+      '#b3da4a', // 8 - Darker saturated green-yellow
+      '#7ada5a', // 9 - Darker saturated green
+      '#5ada7a', // 10 - Darker saturated medium green
+    ],
+  };
+  
+  const colors = pastelColors[isDark ? 'dark' : 'light'];
+  const index = Math.min(Math.max(score - 1, 0), colors.length - 1);
+  return colors[index];
 };
 
 const getTextColorForScore = (score: number | undefined, isDark: boolean, defaultTextColor: string): string => {
   if (!score) return defaultTextColor;
   
-  // For yellow and orange scores, use black text for better contrast
-  // Light mode: light backgrounds (#fee08b, #fdae61) -> black text
-  // Dark mode: dark backgrounds (#d4a017, #d97706) -> black text
-  if (score >= 5 && score < 7) {
-    return '#000'; // Yellow - always black text
-  }
-  if (score >= 3 && score < 5) {
-    return '#000'; // Light orange - always black text
+  // For pastel colors in the middle range (scores 4-7), use dark text for better contrast
+  // Light mode: light pastel backgrounds need dark text
+  // Dark mode: darker pastel backgrounds can use light text, but some middle ones need dark text
+  if (!isDark) {
+    // Light mode: use dark text for lighter pastel colors (scores 3-8)
+    if (score >= 3 && score <= 8) {
+      return '#000';
+    }
+  } else {
+    // Dark mode: use dark text for lighter pastel colors in the middle range (scores 5-7)
+    if (score >= 5 && score <= 7) {
+      return '#000';
+    }
   }
   
   // For other colors, use the default text color
@@ -142,8 +171,8 @@ const styles = StyleSheet.create({
   monthLabels: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingBottom: 4,
-    marginBottom: 4,
+    paddingBottom: 2,
+    marginBottom: 2,
   },
   monthLabel: {
     flex: 1,
@@ -175,6 +204,7 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 4,
   },
   dayNumber: {
     fontSize: 8,
