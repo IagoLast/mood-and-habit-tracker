@@ -1,9 +1,11 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { IconPicker, renderIcon } from '@/components/icon-picker';
+import { renderIcon } from '@/components/icon-picker';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useSettingsPageController } from './settings-page.controller';
+import { CreateEditCategoryDialogView as CreateEditCategoryDialog } from './components/create-edit-category-dialog/create-edit-category-dialog.view';
+import { CreateEditHabitDialogView as CreateEditHabitDialog } from './components/create-edit-habit-dialog/create-edit-habit-dialog.view';
 import { styles } from './settings-page.styles';
 
 export function SettingsPageView() {
@@ -88,12 +90,12 @@ export function SettingsPageView() {
                 <View style={[styles.elementsContainer, { borderTopColor: colors.icon + '33' }]}>
                   <TouchableOpacity style={styles.addElementButton} onPress={() => openElementModal(category.id)}>
                     <Ionicons name="add-circle-outline" size={20} color={colors.tint} />
-                    <Text style={[styles.addElementText, { color: colors.tint }]}>Agregar tarea</Text>
+                    <Text style={[styles.addElementText, { color: colors.tint }]}>Agregar hábito</Text>
                   </TouchableOpacity>
 
                   {(elements[category.id] || []).length === 0 ? (
                     <Text style={[styles.noElementsText, { color: colors.icon + 'CC' }]}>
-                      No hay tareas en esta categoría
+                      No hay hábitos en esta categoría
                     </Text>
                   ) : (
                     (elements[category.id] || []).map((element) => (
@@ -126,86 +128,25 @@ export function SettingsPageView() {
         )}
       </ScrollView>
 
-      <Modal visible={categoryModalVisible} animationType="slide" transparent={true} onRequestClose={closeCategoryModal}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  borderColor: colors.icon + '33',
-                  color: colors.text,
-                  backgroundColor: colors.background,
-                },
-              ]}
-              placeholder="Nombre de la categoría"
-              placeholderTextColor={colors.icon + '99'}
-              value={categoryName}
-              onChangeText={setCategoryName}
-              autoFocus
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.icon + '20' }]}
-                onPress={closeCategoryModal}>
-                <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, { backgroundColor: colors.tint }]}
-                onPress={editingCategory ? handleUpdateCategory : handleCreateCategory}>
-                <Text style={[styles.saveButtonText, { color: colorScheme === 'dark' ? '#000' : '#fff' }]}>
-                  {editingCategory ? 'Guardar' : 'Crear'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <CreateEditCategoryDialog
+        visible={categoryModalVisible}
+        editingCategory={editingCategory}
+        categoryName={categoryName}
+        onCategoryNameChange={setCategoryName}
+        onSave={editingCategory ? handleUpdateCategory : handleCreateCategory}
+        onCancel={closeCategoryModal}
+      />
 
-      <Modal visible={elementModalVisible} animationType="slide" transparent={true} onRequestClose={closeElementModal}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>
-                {editingElement ? 'Editar Tarea' : 'Nueva Tarea'}
-              </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    borderColor: colors.icon + '33',
-                    color: colors.text,
-                    backgroundColor: colors.background,
-                  },
-                ]}
-                placeholder="Nombre de la tarea"
-                placeholderTextColor={colors.icon + '99'}
-                value={elementName}
-                onChangeText={setElementName}
-                autoFocus
-              />
-              <IconPicker selectedIcon={elementIconName} onSelectIcon={setElementIconName} />
-            </ScrollView>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: colors.icon + '20' }]}
-                onPress={closeElementModal}>
-                <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, { backgroundColor: colors.tint }]}
-                onPress={editingElement ? handleUpdateElement : handleCreateElement}>
-                <Text style={[styles.saveButtonText, { color: colorScheme === 'dark' ? '#000' : '#fff' }]}>
-                  {editingElement ? 'Guardar' : 'Crear'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <CreateEditHabitDialog
+        visible={elementModalVisible}
+        editingHabit={editingElement}
+        habitName={elementName}
+        habitIconName={elementIconName}
+        onHabitNameChange={setElementName}
+        onHabitIconNameChange={setElementIconName}
+        onSave={editingElement ? handleUpdateElement : handleCreateElement}
+        onCancel={closeElementModal}
+      />
     </View>
   );
 }

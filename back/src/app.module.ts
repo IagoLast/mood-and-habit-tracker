@@ -4,6 +4,7 @@ import { DatabaseModule } from './common/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { ElementsModule } from './modules/elements/elements.module';
+import { HabitsModule } from './modules/habits/habits.module';
 import { CompletionsModule } from './modules/completions/completions.module';
 import { ScoresModule } from './modules/scores/scores.module';
 import { DaysModule } from './modules/days/days.module';
@@ -24,6 +25,7 @@ import { HealthModule } from './modules/health/health.module';
     AuthModule,
     CategoriesModule,
     ElementsModule,
+    HabitsModule,
     CompletionsModule,
     ScoresModule,
     DaysModule,

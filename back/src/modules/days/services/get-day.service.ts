@@ -3,6 +3,10 @@ import { Pool } from 'pg';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
 import { DayResponseDto, DayCategory, DayElement } from '../dto/day-response.dto';
 import { dateStringToDateZts } from '../../../common/utils/timestamp';
+import { CategoriesRepository } from '../../categories/repositories/categories.repository';
+import { ElementsRepository } from '../../elements/repositories/elements.repository';
+import { ScoresRepository } from '../../scores/repositories/scores.repository';
+import { CompletionsRepository } from '../../completions/repositories/completions.repository';
 
 interface GetDayParams {
   user: AuthenticatedUser;
@@ -11,57 +15,43 @@ interface GetDayParams {
 
 @Injectable()
 export class GetDayService {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+  constructor(
+    @Inject('DATABASE_POOL') private readonly pool: Pool,
+    private readonly categoriesRepository: CategoriesRepository,
+    private readonly elementsRepository: ElementsRepository,
+    private readonly scoresRepository: ScoresRepository,
+    private readonly completionsRepository: CompletionsRepository,
+  ) {}
 
   async execute(params: GetDayParams): Promise<DayResponseDto> {
     const { user, date } = params;
     const dateZts = dateStringToDateZts(date);
 
-    const categoriesResult = await this.pool.query(
-      'SELECT * FROM categories WHERE user_id = $1 ORDER BY created_at DESC',
-      [user.userId]
-    );
+    const categories = await this.categoriesRepository.findAllByUserId(user.userId);
+    const score = await this.scoresRepository.findByUserIdAndDateZts(user.userId, dateZts);
+    const completedElementIds = await this.completionsRepository.findByUserIdAndDateZts(user.userId, dateZts);
+    const completedElementIdsSet = new Set(completedElementIds);
 
-    const scoreResult = await this.pool.query(
-      'SELECT score FROM daily_scores WHERE user_id = $1 AND date_zts = $2',
-      [user.userId, dateZts]
-    );
+    const dayCategories: DayCategory[] = [];
 
-    const completionsResult = await this.pool.query(
-      `SELECT element_id FROM daily_completions dc
-       INNER JOIN elements e ON dc.element_id = e.id
-       INNER JOIN categories c ON e.category_id = c.id
-       WHERE c.user_id = $1 AND dc.date_zts = $2`,
-      [user.userId, dateZts]
-    );
+    for (const category of categories) {
+      const elements = await this.elementsRepository.findAllByCategoryId(category.id);
 
-    const completedElementIds = new Set(
-      completionsResult.rows.map((row) => row.element_id)
-    );
-
-    const categories: DayCategory[] = [];
-
-    for (const category of categoriesResult.rows) {
-      const elementsResult = await this.pool.query(
-        'SELECT * FROM elements WHERE category_id = $1 ORDER BY created_at DESC',
-        [category.id]
-      );
-
-      const elements: DayElement[] = elementsResult.rows.map((element) => ({
+      const dayElements: DayElement[] = elements.map((element) => ({
         ...element,
-        completed: completedElementIds.has(element.id),
+        completed: completedElementIdsSet.has(element.id),
       }));
 
-      categories.push({
+      dayCategories.push({
         ...category,
-        elements,
+        elements: dayElements,
       });
     }
 
     return {
       date_zts: dateZts,
-      score: scoreResult.rows.length > 0 ? scoreResult.rows[0].score : null,
-      categories,
+      score,
+      categories: dayCategories,
     };
   }
 }

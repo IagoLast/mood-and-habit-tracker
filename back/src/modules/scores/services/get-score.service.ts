@@ -1,7 +1,7 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
 import { ScoreResponseDto } from '../dto/score-response.dto';
+import { ScoresRepository } from '../repositories/scores.repository';
 
 interface GetScoreParams {
   user: AuthenticatedUser;
@@ -10,20 +10,17 @@ interface GetScoreParams {
 
 @Injectable()
 export class GetScoreService {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+  constructor(private readonly scoresRepository: ScoresRepository) {}
 
   async execute(params: GetScoreParams): Promise<ScoreResponseDto> {
     const { user, date } = params;
 
-    const result = await this.pool.query(
-      'SELECT * FROM daily_scores WHERE user_id = $1 AND date_zts = $2',
-      [user.userId, date]
-    );
+    const score = await this.scoresRepository.findByIdAndUserId(user.userId, date);
 
-    if (result.rows.length === 0) {
+    if (!score) {
       throw new NotFoundException('Score not found');
     }
 
-    return result.rows[0];
+    return score;
   }
 }

@@ -2,10 +2,12 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
+import { QueryClientProvider } from '@tanstack/react-query';
 // import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/contexts/auth.context';
+import { queryClient } from '@/client/query-client';
 import LoginScreen from './login';
 
 function RootLayoutNav() {
@@ -38,8 +40,10 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

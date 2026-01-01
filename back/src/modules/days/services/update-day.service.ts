@@ -4,6 +4,10 @@ import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
 import { UpdateDayDto } from '../dto/update-day.dto';
 import { DayResponseDto } from '../dto/day-response.dto';
 import { getCurrentTimestampMs, dateStringToDateZts } from '../../../common/utils/timestamp';
+import { CategoriesRepository } from '../../categories/repositories/categories.repository';
+import { ElementsRepository } from '../../elements/repositories/elements.repository';
+import { ScoresRepository } from '../../scores/repositories/scores.repository';
+import { CompletionsRepository } from '../../completions/repositories/completions.repository';
 
 interface UpdateDayParams {
   user: AuthenticatedUser;
@@ -13,20 +17,13 @@ interface UpdateDayParams {
 
 @Injectable()
 export class UpdateDayService {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
-
-  private async verifyElementOwnership(elementIds: number[], userId: string): Promise<boolean> {
-    if (elementIds.length === 0) return true;
-
-    const placeholders = elementIds.map((_, i) => `$${i + 2}`).join(',');
-    const result = await this.pool.query(
-      `SELECT e.id FROM elements e
-       INNER JOIN categories c ON e.category_id = c.id
-       WHERE e.id IN (${placeholders}) AND c.user_id = $1`,
-      [userId, ...elementIds]
-    );
-    return result.rows.length === elementIds.length;
-  }
+  constructor(
+    @Inject('DATABASE_POOL') private readonly pool: Pool,
+    private readonly elementsRepository: ElementsRepository,
+    private readonly categoriesRepository: CategoriesRepository,
+    private readonly scoresRepository: ScoresRepository,
+    private readonly completionsRepository: CompletionsRepository,
+  ) {}
 
   async execute(params: UpdateDayParams): Promise<DayResponseDto> {
     const { user, date, dto } = params;
@@ -37,7 +34,7 @@ export class UpdateDayService {
     }
 
     const elementIds = dto.elements.map((e) => e.elementId);
-    const hasAccess = await this.verifyElementOwnership(elementIds, user.userId);
+    const hasAccess = await this.elementsRepository.verifyOwnershipBatch(elementIds, user.userId);
     if (!hasAccess) {
       throw new NotFoundException('One or more elements not found');
     }
@@ -50,55 +47,27 @@ export class UpdateDayService {
 
       if (dto.score !== undefined && dto.score !== null) {
         const now = getCurrentTimestampMs();
-        await client.query(
-          `INSERT INTO daily_scores (
-            user_id, 
-            date_zts, 
-            score,
-            created_at_timestamp_ms,
-            updated_at_timestamp_ms
-          ) VALUES ($1, $2, $3, $4, $5) 
-          ON CONFLICT (user_id, date_zts) DO UPDATE SET 
-            score = $3, 
-            updated_at = CURRENT_TIMESTAMP,
-            updated_at_timestamp_ms = $5`,
-          [user.userId, dateZts, dto.score, now, now]
-        );
+        await this.scoresRepository.upsertWithClient(client, {
+          userId: user.userId,
+          dateZts,
+          score: dto.score,
+          createdAtTimestampMs: now,
+          updatedAtTimestampMs: now,
+        });
       } else if (dto.score === null) {
-        await client.query(
-          'DELETE FROM daily_scores WHERE user_id = $1 AND date_zts = $2',
-          [user.userId, dateZts]
-        );
+        await this.scoresRepository.deleteWithClient(client, user.userId, dateZts);
       }
 
-      await client.query(
-        `DELETE FROM daily_completions dc
-         USING elements e, categories c
-         WHERE dc.element_id = e.id 
-         AND e.category_id = c.id
-         AND c.user_id = $1 
-         AND dc.date_zts = $2`,
-        [user.userId, dateZts]
-      );
+      await this.completionsRepository.deleteByUserIdAndDateZtsWithClient(client, user.userId, dateZts);
+
       if (completedElements.length > 0) {
         const now = getCurrentTimestampMs();
-        const values = completedElements.map((e, i) => {
-          const baseIndex = i * 3;
-          return `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`;
-        }).join(', ');
-
-        const params: (number | string | number)[] = [];
-        completedElements.forEach((e) => {
-          params.push(e.elementId, dateZts, now);
-        });
-
-        await client.query(
-          `INSERT INTO daily_completions (element_id, date_zts, created_at_timestamp_ms) 
-           VALUES ${values}
-           ON CONFLICT (element_id, date_zts) DO UPDATE SET 
-             created_at_timestamp_ms = EXCLUDED.created_at_timestamp_ms`,
-          params
-        );
+        const completions = completedElements.map((e) => ({
+          elementId: e.elementId,
+          dateZts,
+          createdAtTimestampMs: now,
+        }));
+        await this.completionsRepository.createBatchWithClient(client, completions);
       }
 
       await client.query('COMMIT');
@@ -109,43 +78,30 @@ export class UpdateDayService {
       client.release();
     }
 
-    const categoriesResult = await this.pool.query(
-      'SELECT * FROM categories WHERE user_id = $1 ORDER BY created_at DESC',
-      [user.userId]
-    );
+    const categories = await this.categoriesRepository.findAllByUserId(user.userId);
+    const score = await this.scoresRepository.findByUserIdAndDateZts(user.userId, dateZts);
+    const completedElementIds = new Set(completedElements.map((e) => e.elementId));
 
-    const scoreResult = await this.pool.query(
-      'SELECT score FROM daily_scores WHERE user_id = $1 AND date_zts = $2',
-      [user.userId, dateZts]
-    );
+    const dayCategories = [];
 
-    const completedElementIds = new Set(
-      completedElements.map((e) => e.elementId)
-    );
+    for (const category of categories) {
+      const elements = await this.elementsRepository.findAllByCategoryId(category.id);
 
-    const categories = [];
-
-    for (const category of categoriesResult.rows) {
-      const elementsResult = await this.pool.query(
-        'SELECT * FROM elements WHERE category_id = $1 ORDER BY created_at DESC',
-        [category.id]
-      );
-
-      const elements = elementsResult.rows.map((element) => ({
+      const dayElements = elements.map((element) => ({
         ...element,
         completed: completedElementIds.has(element.id),
       }));
 
-      categories.push({
+      dayCategories.push({
         ...category,
-        elements,
+        elements: dayElements,
       });
     }
 
     return {
       date_zts: dateZts,
-      score: scoreResult.rows.length > 0 ? scoreResult.rows[0].score : null,
-      categories,
+      score,
+      categories: dayCategories,
     };
   }
 }

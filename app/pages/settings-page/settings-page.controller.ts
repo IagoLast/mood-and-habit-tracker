@@ -1,15 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { Alert, Platform } from 'react-native';
-import { categoriesRepository } from '@/repositories/categories.repository';
-import { elementsRepository } from '@/repositories/elements.repository';
-import { useAuth } from '@/contexts/auth.context';
+import { useGetHabitsQuery, useUpsertHabitsMutation } from '@/queries/habits.queries';
 import type { Category, Element } from '@/types';
+import type { UpsertHabitsRequest } from '@/repositories/habits.repository';
 
 export function useSettingsPageController() {
-  const { user } = useAuth();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [elements, setElements] = useState<Record<number, Element[]>>({});
-  const [loading, setLoading] = useState(true);
+  const { data: habitsData, isLoading } = useGetHabitsQuery();
+  const upsertHabitsMutation = useUpsertHabitsMutation();
+
+  const categories = useMemo(() => habitsData?.categories ?? [], [habitsData]);
+  const elements = useMemo(() => {
+    const elementsMap: Record<number, Element[]> = {};
+    for (const cat of categories) {
+      elementsMap[cat.id] = cat.elements;
+    }
+    return elementsMap;
+  }, [categories]);
+
   const [expandedCategory, setExpandedCategory] = useState<number | null>(null);
 
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
@@ -22,91 +29,71 @@ export function useSettingsPageController() {
   const [elementName, setElementName] = useState('');
   const [elementIconName, setElementIconName] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadData();
+  const showError = (message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(message);
+    } else {
+      Alert.alert('Error', message);
     }
-  }, [user]);
-
-  const loadData = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      const cats = await categoriesRepository.list();
-      setCategories(cats);
-
-      const elementsMap: Record<number, Element[]> = {};
-      for (const cat of cats) {
-        const elems = await elementsRepository.list({ categoryId: cat.id });
-        elementsMap[cat.id] = elems;
-      }
-      setElements(elementsMap);
-    } catch (error) {
-      if (Platform.OS === 'web') {
-        window.alert('No se pudieron cargar los datos');
-      } else {
-        Alert.alert('Error', 'No se pudieron cargar los datos');
-      }
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+  };
 
   const handleCreateCategory = async () => {
     if (!categoryName.trim()) {
-      if (Platform.OS === 'web') {
-        window.alert('El nombre de la categoría no puede estar vacío');
-      } else {
-        Alert.alert('Error', 'El nombre de la categoría no puede estar vacío');
-      }
+      showError('El nombre de la categoría no puede estar vacío');
       return;
     }
 
     try {
-      const category = await categoriesRepository.create({
-        name: categoryName.trim(),
-      });
-      setCategories([...categories, category]);
-      setElements({ ...elements, [category.id]: [] });
+      const request: UpsertHabitsRequest = {
+        categories: [
+          ...categories.map((cat) => ({
+            id: cat.id,
+            name: cat.name,
+            elements: (elements[cat.id] || []).map((elem) => ({
+              id: elem.id,
+              name: elem.name,
+              iconName: elem.icon_name,
+            })),
+          })),
+          {
+            name: categoryName.trim(),
+            elements: [],
+          },
+        ],
+      };
+      await upsertHabitsMutation.mutateAsync(request);
       setCategoryName('');
       setCategoryModalVisible(false);
     } catch (error) {
-      if (Platform.OS === 'web') {
-        window.alert('No se pudo crear la categoría');
-      } else {
-        Alert.alert('Error', 'No se pudo crear la categoría');
-      }
+      showError('No se pudo crear la categoría');
       console.error(error);
     }
   };
 
   const handleUpdateCategory = async () => {
     if (!editingCategory || !categoryName.trim()) {
-      if (Platform.OS === 'web') {
-        window.alert('El nombre de la categoría no puede estar vacío');
-      } else {
-        Alert.alert('Error', 'El nombre de la categoría no puede estar vacío');
-      }
+      showError('El nombre de la categoría no puede estar vacío');
       return;
     }
 
     try {
-      const updated = await categoriesRepository.update({
-        id: editingCategory.id,
-        name: categoryName.trim(),
-      });
-      setCategories(categories.map((c) => (c.id === updated.id ? updated : c)));
+      const request: UpsertHabitsRequest = {
+        categories: categories.map((cat) => ({
+          id: cat.id,
+          name: cat.id === editingCategory.id ? categoryName.trim() : cat.name,
+          elements: (elements[cat.id] || []).map((elem) => ({
+            id: elem.id,
+            name: elem.name,
+            iconName: elem.icon_name,
+          })),
+        })),
+      };
+      await upsertHabitsMutation.mutateAsync(request);
       setCategoryName('');
       setEditingCategory(null);
       setCategoryModalVisible(false);
     } catch (error) {
-      if (Platform.OS === 'web') {
-        window.alert('No se pudo actualizar la categoría');
-      } else {
-        Alert.alert('Error', 'No se pudo actualizar la categoría');
-      }
+      showError('No se pudo actualizar la categoría');
       console.error(error);
     }
   };
@@ -130,17 +117,22 @@ export function useSettingsPageController() {
 
     if (confirmDelete) {
       try {
-        await categoriesRepository.delete({ id: categoryId });
-        setCategories(categories.filter((c) => c.id !== categoryId));
-        const newElements = { ...elements };
-        delete newElements[categoryId];
-        setElements(newElements);
+        const request: UpsertHabitsRequest = {
+          categories: categories
+            .filter((c) => c.id !== categoryId)
+            .map((cat) => ({
+              id: cat.id,
+              name: cat.name,
+              elements: (elements[cat.id] || []).map((elem) => ({
+                id: elem.id,
+                name: elem.name,
+                iconName: elem.icon_name,
+              })),
+            })),
+        };
+        await upsertHabitsMutation.mutateAsync(request);
       } catch (error) {
-        if (Platform.OS === 'web') {
-          window.alert('No se pudo eliminar la categoría');
-        } else {
-          Alert.alert('Error', 'No se pudo eliminar la categoría');
-        }
+        showError('No se pudo eliminar la categoría');
         console.error(error);
       }
     }
@@ -148,70 +140,79 @@ export function useSettingsPageController() {
 
   const handleCreateElement = async () => {
     if (!selectedCategoryForElement || !elementName.trim()) {
-      if (Platform.OS === 'web') {
-        window.alert('El nombre de la tarea no puede estar vacío');
-      } else {
-        Alert.alert('Error', 'El nombre de la tarea no puede estar vacío');
-      }
+      showError('El nombre de la tarea no puede estar vacío');
       return;
     }
 
     try {
-      const element = await elementsRepository.create({
-        name: elementName.trim(),
-        categoryId: selectedCategoryForElement,
-        iconName: elementIconName,
-      });
-      setElements({
-        ...elements,
-        [selectedCategoryForElement]: [...(elements[selectedCategoryForElement] || []), element],
-      });
+      const request: UpsertHabitsRequest = {
+        categories: categories.map((cat) => ({
+          id: cat.id,
+          name: cat.name,
+          elements:
+            cat.id === selectedCategoryForElement
+              ? [
+                  ...(elements[cat.id] || []).map((elem) => ({
+                    id: elem.id,
+                    name: elem.name,
+                    iconName: elem.icon_name,
+                  })),
+                  {
+                    name: elementName.trim(),
+                    iconName: elementIconName,
+                  },
+                ]
+              : (elements[cat.id] || []).map((elem) => ({
+                  id: elem.id,
+                  name: elem.name,
+                  iconName: elem.icon_name,
+                })),
+        })),
+      };
+      await upsertHabitsMutation.mutateAsync(request);
       setElementName('');
       setElementIconName(null);
       setSelectedCategoryForElement(null);
       setElementModalVisible(false);
     } catch (error) {
-      if (Platform.OS === 'web') {
-        window.alert('No se pudo crear la tarea');
-      } else {
-        Alert.alert('Error', 'No se pudo crear la tarea');
-      }
+      showError('No se pudo crear la tarea');
       console.error(error);
     }
   };
 
   const handleUpdateElement = async () => {
     if (!editingElement || !elementName.trim()) {
-      if (Platform.OS === 'web') {
-        window.alert('El nombre de la tarea no puede estar vacío');
-      } else {
-        Alert.alert('Error', 'El nombre de la tarea no puede estar vacío');
-      }
+      showError('El nombre de la tarea no puede estar vacío');
       return;
     }
 
     try {
-      const updated = await elementsRepository.update({
-        id: editingElement.id,
-        name: elementName.trim(),
-        iconName: elementIconName,
-      });
-      setElements({
-        ...elements,
-        [editingElement.category_id]: (elements[editingElement.category_id] || []).map((e) =>
-          e.id === updated.id ? updated : e
-        ),
-      });
+      const request: UpsertHabitsRequest = {
+        categories: categories.map((cat) => ({
+          id: cat.id,
+          name: cat.name,
+          elements: (elements[cat.id] || []).map((elem) =>
+            elem.id === editingElement.id
+              ? {
+                  id: elem.id,
+                  name: elementName.trim(),
+                  iconName: elementIconName,
+                }
+              : {
+                  id: elem.id,
+                  name: elem.name,
+                  iconName: elem.icon_name,
+                }
+          ),
+        })),
+      };
+      await upsertHabitsMutation.mutateAsync(request);
       setElementName('');
       setElementIconName(null);
       setEditingElement(null);
       setElementModalVisible(false);
     } catch (error) {
-      if (Platform.OS === 'web') {
-        window.alert('No se pudo actualizar la tarea');
-      } else {
-        Alert.alert('Error', 'No se pudo actualizar la tarea');
-      }
+      showError('No se pudo actualizar la tarea');
       console.error(error);
     }
   };
@@ -229,17 +230,29 @@ export function useSettingsPageController() {
 
     if (confirmDelete) {
       try {
-        await elementsRepository.delete({ id: elementId });
-        setElements({
-          ...elements,
-          [categoryId]: (elements[categoryId] || []).filter((e) => e.id !== elementId),
-        });
+        const request: UpsertHabitsRequest = {
+          categories: categories.map((cat) => ({
+            id: cat.id,
+            name: cat.name,
+            elements:
+              cat.id === categoryId
+                ? (elements[cat.id] || [])
+                    .filter((e) => e.id !== elementId)
+                    .map((elem) => ({
+                      id: elem.id,
+                      name: elem.name,
+                      iconName: elem.icon_name,
+                    }))
+                : (elements[cat.id] || []).map((elem) => ({
+                    id: elem.id,
+                    name: elem.name,
+                    iconName: elem.icon_name,
+                  })),
+          })),
+        };
+        await upsertHabitsMutation.mutateAsync(request);
       } catch (error) {
-        if (Platform.OS === 'web') {
-          window.alert('No se pudo eliminar la tarea');
-        } else {
-          Alert.alert('Error', 'No se pudo eliminar la tarea');
-        }
+        showError('No se pudo eliminar la tarea');
         console.error(error);
       }
     }
@@ -290,7 +303,7 @@ export function useSettingsPageController() {
   };
 
   return {
-    loading,
+    loading: isLoading,
     categories,
     elements,
     expandedCategory,

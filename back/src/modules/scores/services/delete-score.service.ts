@@ -1,6 +1,6 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
+import { ScoresRepository } from '../repositories/scores.repository';
 
 interface DeleteScoreParams {
   user: AuthenticatedUser;
@@ -9,17 +9,14 @@ interface DeleteScoreParams {
 
 @Injectable()
 export class DeleteScoreService {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+  constructor(private readonly scoresRepository: ScoresRepository) {}
 
   async execute(params: DeleteScoreParams): Promise<{ message: string }> {
     const { user, date } = params;
 
-    const result = await this.pool.query(
-      'DELETE FROM daily_scores WHERE user_id = $1 AND date_zts = $2 RETURNING *',
-      [user.userId, date]
-    );
+    const score = await this.scoresRepository.deleteAndReturn(user.userId, date);
 
-    if (result.rows.length === 0) {
+    if (!score) {
       throw new NotFoundException('Score not found');
     }
 

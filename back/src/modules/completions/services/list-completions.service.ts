@@ -1,7 +1,8 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
 import { ListCompletionsResult } from '../dto/completion-response.dto';
+import { ElementsRepository } from '../../elements/repositories/elements.repository';
+import { CompletionsRepository } from '../repositories/completions.repository';
 
 interface ListCompletionsParams {
   user: AuthenticatedUser;
@@ -11,40 +12,23 @@ interface ListCompletionsParams {
 
 @Injectable()
 export class ListCompletionsService {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
-
-  private async verifyElementOwnership(elementId: number, userId: string): Promise<boolean> {
-    const result = await this.pool.query(
-      `SELECT e.id FROM elements e
-       INNER JOIN categories c ON e.category_id = c.id
-       WHERE e.id = $1 AND c.user_id = $2`,
-      [elementId, userId]
-    );
-    return result.rows.length > 0;
-  }
+  constructor(
+    private readonly elementsRepository: ElementsRepository,
+    private readonly completionsRepository: CompletionsRepository,
+  ) {}
 
   async execute(params: ListCompletionsParams): Promise<ListCompletionsResult> {
     const { user, elementId, date } = params;
 
-    const hasAccess = await this.verifyElementOwnership(elementId, user.userId);
+    const hasAccess = await this.elementsRepository.verifyOwnership(elementId, user.userId);
     if (!hasAccess) {
       throw new NotFoundException('Element not found');
     }
 
-    let query = 'SELECT * FROM daily_completions WHERE element_id = $1';
-    const queryParams: (number | string)[] = [elementId];
-
-    if (date) {
-      query += ' AND date_zts = $2';
-      queryParams.push(date);
-    } else {
-      query += ' ORDER BY date_zts DESC';
-    }
-
-    const result = await this.pool.query(query, queryParams);
+    const completions = await this.completionsRepository.findByElementId(elementId, date);
 
     return {
-      data: result.rows,
+      data: completions,
     };
   }
 }

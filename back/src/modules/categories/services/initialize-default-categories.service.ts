@@ -1,6 +1,7 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable } from '@nestjs/common';
 import { getCurrentTimestampMs } from '../../../common/utils/timestamp';
+import { CategoriesRepository } from '../repositories/categories.repository';
+import { ElementsRepository } from '../../elements/repositories/elements.repository';
 
 interface InitializeDefaultCategoriesParams {
   userId: string;
@@ -8,7 +9,10 @@ interface InitializeDefaultCategoriesParams {
 
 @Injectable()
 export class InitializeDefaultCategoriesService {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+  constructor(
+    private readonly categoriesRepository: CategoriesRepository,
+    private readonly elementsRepository: ElementsRepository,
+  ) {}
 
   async execute(params: InitializeDefaultCategoriesParams): Promise<void> {
     const { userId } = params;
@@ -66,29 +70,21 @@ export class InitializeDefaultCategoriesService {
     ];
 
     for (const category of defaultCategories) {
-      const categoryResult = await this.pool.query(
-        `INSERT INTO categories (
-          name, 
-          user_id, 
-          created_at_timestamp_ms,
-          updated_at_timestamp_ms
-        ) VALUES ($1, $2, $3, $4) RETURNING id`,
-        [category.name, userId, now, now]
-      );
-
-      const categoryId = categoryResult.rows[0].id;
+      const categoryId = await this.categoriesRepository.createAndReturnId({
+        name: category.name,
+        userId,
+        createdAtTimestampMs: now,
+        updatedAtTimestampMs: now,
+      });
 
       for (const element of category.elements) {
-        await this.pool.query(
-          `INSERT INTO elements (
-            name, 
-            category_id,
-            icon_name,
-            created_at_timestamp_ms,
-            updated_at_timestamp_ms
-          ) VALUES ($1, $2, $3, $4, $5)`,
-          [element.name, categoryId, element.iconName, now, now]
-        );
+        await this.elementsRepository.createWithoutReturn({
+          name: element.name,
+          categoryId,
+          iconName: element.iconName,
+          createdAtTimestampMs: now,
+          updatedAtTimestampMs: now,
+        });
       }
     }
   }

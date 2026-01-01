@@ -1,0 +1,103 @@
+import { Injectable, Inject } from '@nestjs/common';
+import { Pool } from 'pg';
+
+@Injectable()
+export class CompletionsRepository {
+  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+
+  async findByUserIdAndDateZts(userId: string, dateZts: string) {
+    const result = await this.pool.query(
+      `SELECT element_id FROM daily_completions dc
+       INNER JOIN elements e ON dc.element_id = e.id
+       INNER JOIN categories c ON e.category_id = c.id
+       WHERE c.user_id = $1 AND dc.date_zts = $2`,
+      [userId, dateZts]
+    );
+    return result.rows.map((row) => row.element_id);
+  }
+
+  async findByElementId(elementId: number, dateZts?: string) {
+    let query = 'SELECT * FROM daily_completions WHERE element_id = $1';
+    const queryParams: (number | string)[] = [elementId];
+
+    if (dateZts) {
+      query += ' AND date_zts = $2';
+      queryParams.push(dateZts);
+    } else {
+      query += ' ORDER BY date_zts DESC';
+    }
+
+    const result = await this.pool.query(query, queryParams);
+    return result.rows;
+  }
+
+  async deleteByElementIdAndDateZts(elementId: number, dateZts: string) {
+    const result = await this.pool.query(
+      'DELETE FROM daily_completions WHERE element_id = $1 AND date_zts = $2 RETURNING *',
+      [elementId, dateZts]
+    );
+    return result.rows[0] || null;
+  }
+
+  async create(params: { elementId: number; dateZts: string; createdAtTimestampMs: number }) {
+    const result = await this.pool.query(
+      `INSERT INTO daily_completions (
+        element_id, 
+        date_zts, 
+        created_at_timestamp_ms
+      ) VALUES ($1, $2, $3) 
+      ON CONFLICT (element_id, date_zts) 
+      DO UPDATE SET 
+        created_at_timestamp_ms = $3
+      RETURNING *`,
+      [params.elementId, params.dateZts, params.createdAtTimestampMs]
+    );
+    return result.rows[0];
+  }
+
+  async deleteByUserIdAndDateZts(userId: string, dateZts: string) {
+    await this.pool.query(
+      `DELETE FROM daily_completions dc
+       USING elements e, categories c
+       WHERE dc.element_id = e.id 
+       AND e.category_id = c.id
+       AND c.user_id = $1 
+       AND dc.date_zts = $2`,
+      [userId, dateZts]
+    );
+  }
+
+  async createBatchWithClient(client: any, completions: Array<{ elementId: number; dateZts: string; createdAtTimestampMs: number }>) {
+    if (completions.length === 0) return;
+
+    const values = completions.map((e, i) => {
+      const baseIndex = i * 3;
+      return `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`;
+    }).join(', ');
+
+    const params: (number | string | number)[] = [];
+    completions.forEach((e) => {
+      params.push(e.elementId, e.dateZts, e.createdAtTimestampMs);
+    });
+
+    await client.query(
+      `INSERT INTO daily_completions (element_id, date_zts, created_at_timestamp_ms) 
+       VALUES ${values}
+       ON CONFLICT (element_id, date_zts) DO UPDATE SET 
+         created_at_timestamp_ms = EXCLUDED.created_at_timestamp_ms`,
+      params
+    );
+  }
+
+  async deleteByUserIdAndDateZtsWithClient(client: any, userId: string, dateZts: string) {
+    await client.query(
+      `DELETE FROM daily_completions dc
+       USING elements e, categories c
+       WHERE dc.element_id = e.id 
+       AND e.category_id = c.id
+       AND c.user_id = $1 
+       AND dc.date_zts = $2`,
+      [userId, dateZts]
+    );
+  }
+}
