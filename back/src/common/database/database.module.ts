@@ -14,6 +14,7 @@ import { Pool } from 'pg';
           database: process.env.DB_NAME || 'habittracker',
           user: process.env.DB_USER || 'habituser',
           password: process.env.DB_PASSWORD || 'habitpass',
+          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
           max: 20,
           idleTimeoutMillis: 30000,
           connectionTimeoutMillis: 5000,

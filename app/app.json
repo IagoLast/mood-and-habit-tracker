@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "books",
-    "slug": "books",
+    "name": "mat",
+    "slug": "mat",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

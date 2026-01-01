@@ -6,7 +6,8 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "dev": "nest start --watch",
+    "dev": "dotenv -e .env.local -- nest start --watch",
+    "dev:prd": "dotenv -e .env.prd -- nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -14,7 +15,10 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "migrate": "ts-node scripts/migrate.ts",
+    "migrate:prod": "NODE_ENV=production DOTENV_CONFIG_PATH=.env.production ts-node scripts/migrate.ts",
+    "generate-env-example": "sh scripts/generate-env-example.sh"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",
@@ -47,6 +51,8 @@
     "@types/pg": "^8.10.9",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "dotenv": "^17.2.3",
+    "dotenv-cli": "^7.4.2",
     "eslint": "^9",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
