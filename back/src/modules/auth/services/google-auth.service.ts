@@ -118,7 +118,7 @@ export class GoogleAuthService {
       await this.initializeDefaultCategoriesService.execute({ userId: user.id });
     }
 
-    const token = await generateToken(user.id);
+    const token = generateToken(user.id);
     return { token, user: { id: user.id, email: user.email, name: user.name } };
   }
 }

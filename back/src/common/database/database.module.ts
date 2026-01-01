@@ -43,17 +43,20 @@ import { Pool } from 'pg';
           }
         });
 
-        pool.on('connect', () => {
-          logger.log('New connection established');
-        });
+        // Logs reducidos para evitar spam en producción
+        if (process.env.NODE_ENV !== 'production') {
+          pool.on('connect', () => {
+            logger.log('New connection established');
+          });
 
-        pool.on('acquire', () => {
-          logger.log('Connection acquired from pool');
-        });
+          pool.on('acquire', () => {
+            logger.log('Connection acquired from pool');
+          });
 
-        pool.on('remove', () => {
-          logger.log('Connection removed from pool');
-        });
+          pool.on('remove', () => {
+            logger.log('Connection removed from pool');
+          });
+        }
 
         return pool;
       },
