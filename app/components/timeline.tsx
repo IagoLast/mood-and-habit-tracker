@@ -1,12 +1,12 @@
 import { StyleSheet, View, TouchableOpacity, ScrollView, Text, useColorScheme } from 'react-native';
 import { Temporal } from 'temporal-polyfill';
-import type { DailyScore } from '@/types';
-import { createZonedDateTimeString, parseZonedDateTimeString } from '@/utils/temporal';
+import type { ScoreEntry } from '@/types';
+import { getTodayPlainDateString, parsePlainDateString } from '@/utils/temporal';
 import { Colors } from '@/constants/theme';
 
 interface TimelineProps {
-  scores: DailyScore[];
-  onDayPress: (dateZts: string) => void;
+  scores: ScoreEntry[];
+  onDayPress: (date: string) => void;
 }
 
 const getScoreColor = (score: number | undefined, isDark: boolean): string => {
@@ -19,9 +19,8 @@ const getScoreColor = (score: number | undefined, isDark: boolean): string => {
   return isDark ? '#f85149' : '#F44336';
 };
 
-const formatDate = (dateZts: string): string => {
-  const zonedDateTime = parseZonedDateTimeString(dateZts);
-  const plainDate = zonedDateTime.toPlainDate();
+const formatDate = (dateString: string): string => {
+  const plainDate = parsePlainDateString(dateString);
   return plainDate.day.toString();
 };
 
@@ -30,36 +29,36 @@ export function Timeline({ scores, onDayPress }: TimelineProps) {
   const isDark = colorScheme === 'dark';
   const colors = Colors[colorScheme ?? 'light'];
   
-  const scoresByDate = new Map<string, DailyScore>();
+  const scoresByDate = new Map<string, ScoreEntry>();
   scores.forEach((score) => {
-    scoresByDate.set(score.date_zts, score);
+    scoresByDate.set(score.date, score);
   });
 
-  const today = Temporal.Now.zonedDateTimeISO();
-  const days: Temporal.ZonedDateTime[] = [];
+  const today = Temporal.Now.plainDateISO();
+  const days: Temporal.PlainDate[] = [];
   
   for (let i = 29; i >= 0; i--) {
     const date = today.subtract({ days: i });
     days.push(date);
   }
 
-  const todayZts = createZonedDateTimeString(today.year, today.month, today.day);
+  const todayDateString = today.toString();
 
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
         <View style={styles.timeline}>
           {days.map((date) => {
-            const dateZts = createZonedDateTimeString(date.year, date.month, date.day);
-            const score = scoresByDate.get(dateZts);
-            const isToday = dateZts === todayZts;
+            const dateString = date.toString();
+            const score = scoresByDate.get(dateString);
+            const isToday = dateString === todayDateString;
             const color = getScoreColor(score?.score, isDark);
 
             return (
               <TouchableOpacity
-                key={dateZts}
+                key={dateString}
                 style={styles.dayContainer}
-                onPress={() => onDayPress(dateZts)}>
+                onPress={() => onDayPress(dateString)}>
                 <View
                   style={[
                     styles.dayDot,
@@ -67,7 +66,7 @@ export function Timeline({ scores, onDayPress }: TimelineProps) {
                     isToday && [styles.todayDot, { borderColor: colors.tint }],
                   ]}
                 />
-                <Text style={[styles.dayLabel, { color: colors.icon }]}>{formatDate(dateZts)}</Text>
+                <Text style={[styles.dayLabel, { color: colors.icon }]}>{formatDate(dateString)}</Text>
               </TouchableOpacity>
             );
           })}

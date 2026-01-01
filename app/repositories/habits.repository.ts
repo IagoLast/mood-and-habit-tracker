@@ -1,8 +1,8 @@
 import { client } from '@/client/api-client';
-import type { Category, Element } from '@/types';
+import type { Category, Habit } from '@/types';
 
 export interface HabitCategory extends Category {
-  elements: Element[];
+  elements: Habit[];
 }
 
 export interface HabitsResponse {

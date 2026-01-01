@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
 import { DayResponseDto, DayCategory, DayElement } from '../dto/day-response.dto';
-import { dateStringToDateZts } from '../../../common/utils/timestamp';
-import { CategoriesRepository } from '../../categories/repositories/categories.repository';
-import { ElementsRepository } from '../../elements/repositories/elements.repository';
+import { dateStringToPlainDate } from '../../../common/utils/timestamp';
+import { CategoriesRepository } from '../../habits/repositories/categories.repository';
+import { HabitsRepository } from '../../habits/repositories/habits.repository';
 import { ScoresRepository } from '../../scores/repositories/scores.repository';
 import { CompletionsRepository } from '../repositories/completions.repository';
 
@@ -16,31 +16,31 @@ interface GetDayParams {
 export class GetDayService {
   constructor(
     private readonly categoriesRepository: CategoriesRepository,
-    private readonly elementsRepository: ElementsRepository,
+    private readonly habitsRepository: HabitsRepository,
     private readonly scoresRepository: ScoresRepository,
     private readonly completionsRepository: CompletionsRepository,
   ) {}
 
   async execute(params: GetDayParams): Promise<DayResponseDto> {
     const { user, date } = params;
-    const dateZts = dateStringToDateZts(date);
+    const plainDate = dateStringToPlainDate(date);
 
     const categories = await this.categoriesRepository.findAllByUserId(user.userId);
-    const score = await this.scoresRepository.findByUserIdAndDateZts(user.userId, dateZts);
-    const completedElementIds = await this.completionsRepository.findByUserIdAndDateZts(
+    const score = await this.scoresRepository.findByUserIdAndDate(user.userId, plainDate);
+    const completedHabitIds = await this.completionsRepository.findByUserIdAndDate(
       user.userId,
-      dateZts,
+      plainDate,
     );
-    const completedElementIdsSet = new Set(completedElementIds);
+    const completedHabitIdsSet = new Set(completedHabitIds);
 
     const dayCategories: DayCategory[] = [];
 
     for (const category of categories) {
-      const elements = await this.elementsRepository.findAllByCategoryId(category.id);
+      const habits = await this.habitsRepository.findAllByCategoryId(category.id);
 
-      const dayElements: DayElement[] = elements.map((element) => ({
-        ...element,
-        completed: completedElementIdsSet.has(element.id),
+      const dayElements: DayElement[] = habits.map((habit) => ({
+        ...habit,
+        completed: completedHabitIdsSet.has(habit.id),
       }));
 
       dayCategories.push({
@@ -50,7 +50,7 @@ export class GetDayService {
     }
 
     return {
-      date_zts: dateZts,
+      date: plainDate,
       score,
       categories: dayCategories,
     };

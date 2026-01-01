@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
 import { HabitsResponseDto, HabitCategory } from '../dto/habits-response.dto';
-import { CategoriesRepository } from '../../categories/repositories/categories.repository';
-import { ElementsRepository } from '../../elements/repositories/elements.repository';
+import { CategoriesRepository } from '../repositories/categories.repository';
+import { HabitsRepository } from '../repositories/habits.repository';
 
 interface GetHabitsParams {
   user: AuthenticatedUser;
@@ -12,7 +12,7 @@ interface GetHabitsParams {
 export class GetHabitsService {
   constructor(
     private readonly categoriesRepository: CategoriesRepository,
-    private readonly elementsRepository: ElementsRepository,
+    private readonly habitsRepository: HabitsRepository,
   ) {}
 
   async execute(params: GetHabitsParams): Promise<HabitsResponseDto> {
@@ -22,10 +22,10 @@ export class GetHabitsService {
     const habitsCategories: HabitCategory[] = [];
 
     for (const category of categories) {
-      const elements = await this.elementsRepository.findAllByCategoryId(category.id);
+      const habits = await this.habitsRepository.findAllByCategoryId(category.id);
       habitsCategories.push({
         ...category,
-        elements,
+        elements: habits,
       });
     }
 

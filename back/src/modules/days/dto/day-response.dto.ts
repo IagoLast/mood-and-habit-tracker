@@ -1,7 +1,7 @@
-import { CategoryResponseDto } from '../../categories/dto/category-response.dto';
-import { ElementResponseDto } from '../../elements/dto/element-response.dto';
+import { CategoryResponseDto } from '../../habits/dto/category-response.dto';
+import { HabitResponseDto } from '../../habits/dto/habit-response.dto';
 
-export interface DayElement extends ElementResponseDto {
+export interface DayElement extends HabitResponseDto {
   completed: boolean;
 }
 
@@ -10,7 +10,7 @@ export interface DayCategory extends CategoryResponseDto {
 }
 
 export class DayResponseDto {
-  date_zts: string;
+  date: string;
   score: number | null;
   categories: DayCategory[];
 }

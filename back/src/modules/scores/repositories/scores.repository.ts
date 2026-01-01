@@ -5,94 +5,94 @@ import { Pool } from 'pg';
 export class ScoresRepository {
   constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
 
-  async findByUserIdAndDateZts(userId: string, dateZts: string) {
+  async findByUserIdAndDate(userId: string, date: string) {
     const result = await this.pool.query(
-      'SELECT score FROM daily_scores WHERE user_id = $1 AND date_zts = $2',
-      [userId, dateZts]
+      'SELECT score FROM daily_scores WHERE user_id = $1 AND date = $2',
+      [userId, date]
     );
     return result.rows.length > 0 ? result.rows[0].score : null;
   }
 
-  async findByIdAndUserId(userId: string, dateZts: string) {
+  async findByIdAndUserId(userId: string, date: string) {
     const result = await this.pool.query(
-      'SELECT * FROM daily_scores WHERE user_id = $1 AND date_zts = $2',
-      [userId, dateZts]
+      'SELECT * FROM daily_scores WHERE user_id = $1 AND date = $2',
+      [userId, date]
     );
     return result.rows[0] || null;
   }
 
   async findAllByUserId(userId: string, startDate?: string, endDate?: string) {
-    let query = 'SELECT * FROM daily_scores WHERE user_id = $1';
+    let query = 'SELECT id, user_id, TO_CHAR(date, \'YYYY-MM-DD\') as date, score FROM daily_scores WHERE user_id = $1';
     const queryParams: (string | number)[] = [userId];
 
     if (startDate && endDate) {
-      query += ' AND date_zts >= $2 AND date_zts <= $3 ORDER BY date_zts DESC';
+      query += ' AND date >= $2::date AND date <= $3::date ORDER BY date DESC';
       queryParams.push(startDate, endDate);
     } else {
-      query += ' ORDER BY date_zts DESC LIMIT 30';
+      query += ' ORDER BY date DESC LIMIT 30';
     }
 
     const result = await this.pool.query(query, queryParams);
-    return result.rows;
+    return result.rows.map((row) => {
+      return {
+        id: row.id,
+        date: row.date,
+        score: row.score,
+      };
+    });
   }
 
-  async deleteAndReturn(userId: string, dateZts: string) {
+  async deleteAndReturn(userId: string, date: string) {
     const result = await this.pool.query(
-      'DELETE FROM daily_scores WHERE user_id = $1 AND date_zts = $2 RETURNING *',
-      [userId, dateZts]
+      'DELETE FROM daily_scores WHERE user_id = $1 AND date = $2 RETURNING *',
+      [userId, date]
     );
     return result.rows[0] || null;
   }
 
-  async upsert(params: { userId: string; dateZts: string; score: number; createdAtTimestampMs: number; updatedAtTimestampMs: number }) {
+  async upsert(params: { userId: string; date: string; score: number }) {
     const result = await this.pool.query(
       `INSERT INTO daily_scores (
         user_id, 
-        date_zts, 
-        score,
-        created_at_timestamp_ms,
-        updated_at_timestamp_ms
-      ) VALUES ($1, $2, $3, $4, $5) 
-      ON CONFLICT (user_id, date_zts) DO UPDATE SET 
+        date, 
+        score
+      ) VALUES ($1, $2, $3) 
+      ON CONFLICT (user_id, date) DO UPDATE SET 
         score = $3, 
-        updated_at = CURRENT_TIMESTAMP,
-        updated_at_timestamp_ms = $5
+        updated_at = CURRENT_TIMESTAMP
       RETURNING *`,
-      [params.userId, params.dateZts, params.score, params.createdAtTimestampMs, params.updatedAtTimestampMs]
+      [params.userId, params.date, params.score]
     );
     return result.rows[0];
   }
 
-  async delete(userId: string, dateZts: string) {
+  async delete(userId: string, date: string) {
     await this.pool.query(
-      'DELETE FROM daily_scores WHERE user_id = $1 AND date_zts = $2',
-      [userId, dateZts]
+      'DELETE FROM daily_scores WHERE user_id = $1 AND date = $2',
+      [userId, date]
     );
   }
 
-  async upsertWithClient(client: any, params: { userId: string; dateZts: string; score: number; createdAtTimestampMs: number; updatedAtTimestampMs: number }) {
+  async upsertWithClient(client: any, params: { userId: string; date: string; score: number }) {
     const result = await client.query(
       `INSERT INTO daily_scores (
         user_id, 
-        date_zts, 
-        score,
-        created_at_timestamp_ms,
-        updated_at_timestamp_ms
-      ) VALUES ($1, $2, $3, $4, $5) 
-      ON CONFLICT (user_id, date_zts) DO UPDATE SET 
+        date, 
+        score
+      ) VALUES ($1, $2, $3) 
+      ON CONFLICT (user_id, date) DO UPDATE SET 
         score = $3, 
-        updated_at = CURRENT_TIMESTAMP,
-        updated_at_timestamp_ms = $5
+        updated_at = CURRENT_TIMESTAMP
       RETURNING score`,
-      [params.userId, params.dateZts, params.score, params.createdAtTimestampMs, params.updatedAtTimestampMs]
+      [params.userId, params.date, params.score]
     );
     return result.rows[0]?.score ?? null;
   }
 
-  async deleteWithClient(client: any, userId: string, dateZts: string) {
+  async deleteWithClient(client: any, userId: string, date: string) {
     await client.query(
-      'DELETE FROM daily_scores WHERE user_id = $1 AND date_zts = $2',
-      [userId, dateZts]
+      'DELETE FROM daily_scores WHERE user_id = $1 AND date = $2',
+      [userId, date]
     );
   }
 }

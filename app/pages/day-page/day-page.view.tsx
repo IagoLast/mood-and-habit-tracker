@@ -16,7 +16,7 @@ export function DayPageView() {
     loading,
     categories,
     score,
-    dateZts,
+    date,
     datePickerVisible,
     formatDate,
     handleToggleCompletion,
@@ -51,7 +51,7 @@ export function DayPageView() {
           <Ionicons name="chevron-back" size={24} color={colors.tint} />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSelectDate} style={styles.dateContainer}>
-          <Text style={[commonStyles.headerTitle, { color: colors.text, textTransform: 'capitalize' }]}>{formatDate(dateZts)}</Text>
+          <Text style={[commonStyles.headerTitle, { color: colors.text, textTransform: 'capitalize' }]}>{formatDate(date)}</Text>
           <Ionicons name="chevron-down" size={20} color={colors.tint} />
         </TouchableOpacity>
         <View style={commonStyles.placeholder} />
@@ -109,7 +109,7 @@ export function DayPageView() {
 
       <DatePicker
         visible={datePickerVisible}
-        currentDate={dateZts}
+        currentDate={date}
         onSelectDate={handleConfirmDate}
         onCancel={handleCancelDatePicker}
       />

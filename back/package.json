@@ -18,6 +18,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migrate": "ts-node scripts/migrate.ts",
     "migrate:prod": "NODE_ENV=production DOTENV_CONFIG_PATH=.env.production ts-node scripts/migrate.ts",
+    "reset-db": "ts-node scripts/reset-db.ts",
+    "reset-db:prod": "NODE_ENV=production DOTENV_CONFIG_PATH=.env.production ts-node scripts/reset-db.ts",
+    "reset-db:local": "docker-compose down -v && docker-compose up -d",
     "fill-2025": "ts-node scripts/fill-2025-dummy-data.ts",
     "generate-env-example": "sh scripts/generate-env-example.sh"
   },

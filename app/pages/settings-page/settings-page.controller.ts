@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Alert, Platform } from 'react-native';
 import { useGetHabitsQuery, useUpsertHabitsMutation } from '@/queries/habits.queries';
-import type { Category, Element } from '@/types';
+import type { Category, Habit } from '@/types';
 import type { UpsertHabitsRequest } from '@/repositories/habits.repository';
 
 export function useSettingsPageController() {
@@ -10,7 +10,7 @@ export function useSettingsPageController() {
 
   const categories = useMemo(() => habitsData?.categories ?? [], [habitsData]);
   const elements = useMemo(() => {
-    const elementsMap: Record<number, Element[]> = {};
+    const elementsMap: Record<number, Habit[]> = {};
     for (const cat of categories) {
       elementsMap[cat.id] = cat.elements;
     }
@@ -22,7 +22,7 @@ export function useSettingsPageController() {
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [elementModalVisible, setElementModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [editingElement, setEditingElement] = useState<Element | null>(null);
+  const [editingElement, setEditingElement] = useState<Habit | null>(null);
   const [selectedCategoryForElement, setSelectedCategoryForElement] = useState<number | null>(null);
 
   const [categoryName, setCategoryName] = useState('');
@@ -275,7 +275,7 @@ export function useSettingsPageController() {
     setCategoryName('');
   };
 
-  const openElementModal = (categoryId: number, element?: Element) => {
+  const openElementModal = (categoryId: number, element?: Habit) => {
     if (element) {
       setEditingElement(element);
       setElementName(element.name);

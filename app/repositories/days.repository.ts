@@ -7,8 +7,6 @@ export interface DayElement {
   icon_name: string | null;
   created_at: string;
   updated_at: string;
-  created_at_timestamp_ms: number;
-  updated_at_timestamp_ms: number;
   completed: boolean;
 }
 
@@ -18,19 +16,17 @@ export interface DayCategory {
   user_id: string;
   created_at: string;
   updated_at: string;
-  created_at_timestamp_ms: number;
-  updated_at_timestamp_ms: number;
   elements: DayElement[];
 }
 
 export interface DayData {
-  date_zts: string;
+  date: string;
   score: number | null;
   categories: DayCategory[];
 }
 
 export interface UpdateDayRequest {
-  date_zts?: string;
+  date?: string;
   score?: number | null;
   elements: Array<{
     elementId: number;

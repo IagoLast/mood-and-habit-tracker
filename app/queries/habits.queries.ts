@@ -20,11 +20,11 @@ function createOptimisticHabitsResponse(
   const existingCategoriesMap = new Map(
     previousData.categories.map((cat) => [cat.id, cat])
   );
-  const existingElementsMap = new Map<number, Map<number, typeof previousData.categories[0]['elements'][0]>>();
+  const existingHabitsMap = new Map<number, Map<number, typeof previousData.categories[0]['elements'][0]>>();
   
   previousData.categories.forEach((cat) => {
-    const elementsMap = new Map(cat.elements.map((elem) => [elem.id, elem]));
-    existingElementsMap.set(cat.id, elementsMap);
+    const habitsMap = new Map(cat.elements.map((habit) => [habit.id, habit]));
+    existingHabitsMap.set(cat.id, habitsMap);
   });
 
   let tempIdCounter = -1;
@@ -35,24 +35,21 @@ function createOptimisticHabitsResponse(
     
     const categoryId = reqCat.id ?? getTempId();
     const now = new Date().toISOString();
-    const nowTimestamp = Date.now();
 
-    const optimisticElements = reqCat.elements.map((reqElem) => {
-      const existingElem = reqElem.id && existingCat
-        ? existingElementsMap.get(reqCat.id!)?.get(reqElem.id)
+    const optimisticHabits = reqCat.elements.map((reqElem) => {
+      const existingHabit = reqElem.id && existingCat
+        ? existingHabitsMap.get(reqCat.id!)?.get(reqElem.id)
         : null;
 
-      const elementId = reqElem.id ?? getTempId();
+      const habitId = reqElem.id ?? getTempId();
 
       return {
-        id: elementId,
+        id: habitId,
         category_id: categoryId,
         name: reqElem.name,
         icon_name: reqElem.iconName ?? null,
-        created_at: existingElem?.created_at ?? now,
+        created_at: existingHabit?.created_at ?? now,
         updated_at: now,
-        created_at_timestamp_ms: existingElem?.created_at_timestamp_ms ?? nowTimestamp,
-        updated_at_timestamp_ms: nowTimestamp,
       };
     });
 
@@ -62,9 +59,7 @@ function createOptimisticHabitsResponse(
       user_id: existingCat?.user_id ?? '',
       created_at: existingCat?.created_at ?? now,
       updated_at: now,
-      created_at_timestamp_ms: existingCat?.created_at_timestamp_ms ?? nowTimestamp,
-      updated_at_timestamp_ms: nowTimestamp,
-      elements: optimisticElements,
+      elements: optimisticHabits,
     };
   });
 

@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
 import { UpsertHabitsDto } from '../dto/upsert-habits.dto';
 import { HabitsResponseDto, HabitCategory } from '../dto/habits-response.dto';
-import { CategoriesRepository } from '../../categories/repositories/categories.repository';
-import { ElementsRepository } from '../../elements/repositories/elements.repository';
-import { CategoryResponseDto } from '../../categories/dto/category-response.dto';
-import { ElementResponseDto } from '../../elements/dto/element-response.dto';
-import { getCurrentTimestampMs } from '../../../common/utils/timestamp';
+import { CategoriesRepository } from '../repositories/categories.repository';
+import { HabitsRepository } from '../repositories/habits.repository';
+import { CategoryResponseDto } from '../dto/category-response.dto';
+import { HabitResponseDto } from '../dto/habit-response.dto';
 
 interface UpsertHabitsParams {
   user: AuthenticatedUser;
@@ -17,12 +16,11 @@ interface UpsertHabitsParams {
 export class UpsertHabitsService {
   constructor(
     private readonly categoriesRepository: CategoriesRepository,
-    private readonly elementsRepository: ElementsRepository,
+    private readonly habitsRepository: HabitsRepository,
   ) {}
 
   async execute(params: UpsertHabitsParams): Promise<HabitsResponseDto> {
     const { user, dto } = params;
-    const now = getCurrentTimestampMs();
 
     const existingCategories = await this.categoriesRepository.findAllByUserId(user.userId);
     const existingCategoryIds = new Set(existingCategories.map((c) => c.id));
@@ -39,14 +37,11 @@ export class UpsertHabitsService {
           id: categoryDto.id,
           userId: user.userId,
           name: categoryDto.name,
-          updatedAtTimestampMs: now,
         });
       } else {
         category = await this.categoriesRepository.create({
           name: categoryDto.name,
           userId: user.userId,
-          createdAtTimestampMs: now,
-          updatedAtTimestampMs: now,
         });
       }
 
@@ -54,55 +49,52 @@ export class UpsertHabitsService {
 
       const categoryId = category.id;
 
-      const existingElements = await this.elementsRepository.findAllByCategoryId(categoryId);
-      const existingElementIds = new Set(existingElements.map((e) => e.id));
-      const existingElementIdsToKeep = new Set<number>();
+      const existingHabits = await this.habitsRepository.findAllByCategoryId(categoryId);
+      const existingHabitIds = new Set(existingHabits.map((h) => h.id));
+      const existingHabitIdsToKeep = new Set<number>();
 
-      const categoryElements: ElementResponseDto[] = [];
+      const categoryHabits: HabitResponseDto[] = [];
 
-      for (const elementDto of categoryDto.elements) {
-        let element: ElementResponseDto | null;
+      for (const habitDto of categoryDto.elements) {
+        let habit: HabitResponseDto | null;
 
-        if (elementDto.id && existingElementIds.has(elementDto.id)) {
-          existingElementIdsToKeep.add(elementDto.id);
-          element = await this.elementsRepository.update({
-            id: elementDto.id,
-            name: elementDto.name,
-            iconName: elementDto.iconName ?? null,
-            updatedAtTimestampMs: now,
+        if (habitDto.id && existingHabitIds.has(habitDto.id)) {
+          existingHabitIdsToKeep.add(habitDto.id);
+          habit = await this.habitsRepository.update({
+            id: habitDto.id,
+            name: habitDto.name,
+            iconName: habitDto.iconName ?? null,
           });
         } else {
-          element = await this.elementsRepository.create({
-            name: elementDto.name,
+          habit = await this.habitsRepository.create({
+            name: habitDto.name,
             categoryId,
-            iconName: elementDto.iconName ?? null,
-            createdAtTimestampMs: now,
-            updatedAtTimestampMs: now,
+            iconName: habitDto.iconName ?? null,
           });
         }
 
-        if (element) {
-          categoryElements.push(element);
+        if (habit) {
+          categoryHabits.push(habit);
         }
       }
 
-      for (const elementId of existingElementIds) {
-        if (!existingElementIdsToKeep.has(elementId)) {
-          await this.elementsRepository.delete(elementId);
+      for (const habitId of existingHabitIds) {
+        if (!existingHabitIdsToKeep.has(habitId)) {
+          await this.habitsRepository.delete(habitId);
         }
       }
 
       habitsCategories.push({
         ...category,
-        elements: categoryElements,
+        elements: categoryHabits,
       });
     }
 
     for (const categoryId of existingCategoryIds) {
       if (!existingCategoryIdsToKeep.has(categoryId)) {
-        const categoryElements = await this.elementsRepository.findAllByCategoryId(categoryId);
-        for (const element of categoryElements) {
-          await this.elementsRepository.delete(element.id);
+        const categoryHabits = await this.habitsRepository.findAllByCategoryId(categoryId);
+        for (const habit of categoryHabits) {
+          await this.habitsRepository.delete(habit.id);
         }
         await this.categoriesRepository.delete(categoryId, user.userId);
       }

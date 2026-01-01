@@ -5,56 +5,55 @@ import { Pool } from 'pg';
 export class CompletionsRepository {
   constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
 
-  async findByUserIdAndDateZts(userId: string, dateZts: string): Promise<number[]> {
+  async findByUserIdAndDate(userId: string, date: string): Promise<number[]> {
     const result = await this.pool.query(
-      `SELECT element_id FROM daily_completions dc
-       INNER JOIN elements e ON dc.element_id = e.id
-       INNER JOIN categories c ON e.category_id = c.id
-       WHERE c.user_id = $1 AND dc.date_zts = $2`,
-      [userId, dateZts]
+      `SELECT habit_id FROM daily_completions dc
+       INNER JOIN habits h ON dc.habit_id = h.id
+       INNER JOIN categories c ON h.category_id = c.id
+       WHERE c.user_id = $1 AND dc.date = $2`,
+      [userId, date]
     );
-    return result.rows.map((row) => row.element_id);
+    return result.rows.map((row) => row.habit_id);
   }
 
-  async deleteByUserIdAndDateZtsWithClient(
+  async deleteByUserIdAndDateWithClient(
     client: any,
     userId: string,
-    dateZts: string,
+    date: string,
   ): Promise<void> {
     await client.query(
       `DELETE FROM daily_completions dc
-       USING elements e, categories c
-       WHERE dc.element_id = e.id 
-       AND e.category_id = c.id
+       USING habits h, categories c
+       WHERE dc.habit_id = h.id 
+       AND h.category_id = c.id
        AND c.user_id = $1 
-       AND dc.date_zts = $2`,
-      [userId, dateZts]
+       AND dc.date = $2`,
+      [userId, date]
     );
   }
 
   async createBatchWithClient(
     client: any,
-    completions: Array<{ elementId: number; dateZts: string; createdAtTimestampMs: number }>,
+    completions: Array<{ habitId: number; date: string }>,
   ): Promise<void> {
     if (completions.length === 0) return;
 
     const values = completions
       .map((e, i) => {
-        const baseIndex = i * 3;
-        return `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`;
+        const baseIndex = i * 2;
+        return `($${baseIndex + 1}, $${baseIndex + 2})`;
       })
       .join(', ');
 
-    const params: (number | string | number)[] = [];
+    const params: (number | string)[] = [];
     completions.forEach((e) => {
-      params.push(e.elementId, e.dateZts, e.createdAtTimestampMs);
+      params.push(e.habitId, e.date);
     });
 
     await client.query(
-      `INSERT INTO daily_completions (element_id, date_zts, created_at_timestamp_ms) 
+      `INSERT INTO daily_completions (habit_id, date) 
        VALUES ${values}
-       ON CONFLICT (element_id, date_zts) DO UPDATE SET 
-         created_at_timestamp_ms = EXCLUDED.created_at_timestamp_ms`,
+       ON CONFLICT (habit_id, date) DO NOTHING`,
       params
     );
   }

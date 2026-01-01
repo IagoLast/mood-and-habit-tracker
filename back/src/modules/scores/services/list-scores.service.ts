@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
-import { ScoreResponseDto } from '../dto/score-response.dto';
+import { ListScoresResponseDto } from '../dto/score-response.dto';
 import { ScoresRepository } from '../repositories/scores.repository';
-import { normalizeDateZtsToUTC } from '../../../common/utils/timestamp';
+import { normalizePlainDate } from '../../../common/utils/timestamp';
 
 interface ListScoresParams {
   user: AuthenticatedUser;
@@ -10,24 +10,21 @@ interface ListScoresParams {
   endDate?: string;
 }
 
-export interface ListScoresResult {
-  data: ScoreResponseDto[];
-}
-
 @Injectable()
 export class ListScoresService {
   constructor(private readonly scoresRepository: ScoresRepository) {}
 
-  async execute(params: ListScoresParams): Promise<ListScoresResult> {
+  async execute(params: ListScoresParams): Promise<ListScoresResponseDto> {
     const { user, startDate, endDate } = params;
 
-    const normalizedStartDate = startDate ? normalizeDateZtsToUTC(startDate) : undefined;
-    const normalizedEndDate = endDate ? normalizeDateZtsToUTC(endDate) : undefined;
+    const normalizedStartDate = startDate ? normalizePlainDate(startDate) : undefined;
+    const normalizedEndDate = endDate ? normalizePlainDate(endDate) : undefined;
 
-    const scores = await this.scoresRepository.findAllByUserId(user.userId, normalizedStartDate, normalizedEndDate);
+    const entries = await this.scoresRepository.findAllByUserId(user.userId, normalizedStartDate, normalizedEndDate);
 
     return {
-      data: scores,
+      user_id: user.userId,
+      entries,
     };
   }
 }

@@ -13,7 +13,7 @@ class ElementCompletionDto {
 export class UpdateDayDto {
   @IsOptional()
   @IsString()
-  date_zts?: string;
+  date?: string;
 
   @IsOptional()
   @IsInt()

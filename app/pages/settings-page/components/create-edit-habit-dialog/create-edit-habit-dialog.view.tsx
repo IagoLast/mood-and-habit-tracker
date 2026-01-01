@@ -4,11 +4,11 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useCreateEditHabitDialogController } from './create-edit-habit-dialog.controller';
 import { styles } from './create-edit-habit-dialog.styles';
-import type { Element } from '@/types';
+import type { Habit } from '@/types';
 
 interface CreateEditHabitDialogProps {
   visible: boolean;
-  editingHabit: Element | null;
+  editingHabit: Habit | null;
   habitName: string;
   habitIconName: string | null;
   onHabitNameChange: (name: string) => void;

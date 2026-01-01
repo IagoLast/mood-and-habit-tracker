@@ -4,30 +4,26 @@ export interface Category {
   user_id: string;
   created_at: string;
   updated_at: string;
-  created_at_timestamp_ms: number;
-  updated_at_timestamp_ms: number;
 }
 
-export interface Element {
+export interface Habit {
   id: number;
   category_id: number;
   name: string;
   icon_name: string | null;
   created_at: string;
   updated_at: string;
-  created_at_timestamp_ms: number;
-  updated_at_timestamp_ms: number;
 }
 
-export interface DailyScore {
+export interface ScoreEntry {
   id: number;
-  user_id: string;
-  date_zts: string;
+  date: string;
   score: number;
-  created_at: string;
-  updated_at: string;
-  created_at_timestamp_ms: number;
-  updated_at_timestamp_ms: number;
+}
+
+export interface ListScoresResponse {
+  user_id: string;
+  entries: ScoreEntry[];
 }
 
 export interface User {

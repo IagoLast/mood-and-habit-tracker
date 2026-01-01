@@ -1,10 +1,10 @@
-export class ScoreResponseDto {
+export class ScoreEntryDto {
   id: number;
-  user_id: string;
-  date_zts: string;
+  date: string;
   score: number;
-  created_at: Date;
-  updated_at: Date;
-  created_at_timestamp_ms: number;
-  updated_at_timestamp_ms: number;
+}
+
+export class ListScoresResponseDto {
+  user_id: string;
+  entries: ScoreEntryDto[];
 }

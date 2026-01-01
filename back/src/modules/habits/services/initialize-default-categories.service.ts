@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { getCurrentTimestampMs } from '../../../common/utils/timestamp';
 import { CategoriesRepository } from '../repositories/categories.repository';
-import { ElementsRepository } from '../../elements/repositories/elements.repository';
+import { HabitsRepository } from '../repositories/habits.repository';
 
 interface InitializeDefaultCategoriesParams {
   userId: string;
@@ -11,12 +10,11 @@ interface InitializeDefaultCategoriesParams {
 export class InitializeDefaultCategoriesService {
   constructor(
     private readonly categoriesRepository: CategoriesRepository,
-    private readonly elementsRepository: ElementsRepository,
+    private readonly habitsRepository: HabitsRepository,
   ) {}
 
   async execute(params: InitializeDefaultCategoriesParams): Promise<void> {
     const { userId } = params;
-    const now = getCurrentTimestampMs();
 
     const defaultCategories = [
       {
@@ -74,17 +72,13 @@ export class InitializeDefaultCategoriesService {
       const categoryId = await this.categoriesRepository.createAndReturnId({
         name: category.name,
         userId,
-        createdAtTimestampMs: now,
-        updatedAtTimestampMs: now,
       });
 
       for (const element of category.elements) {
-        await this.elementsRepository.createWithoutReturn({
+        await this.habitsRepository.createWithoutReturn({
           name: element.name,
           categoryId,
           iconName: element.iconName,
-          createdAtTimestampMs: now,
-          updatedAtTimestampMs: now,
         });
       }
     }

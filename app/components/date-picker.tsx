@@ -3,7 +3,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { useState, useEffect } from 'react';
 import { Temporal } from 'temporal-polyfill';
-import { parseZonedDateTimeString } from '@/utils/temporal';
+import { parsePlainDateString } from '@/utils/temporal';
 import { styles } from './date-picker.styles';
 
 interface DatePickerProps {
@@ -16,16 +16,7 @@ interface DatePickerProps {
 const generateYears = () => Array.from({ length: 201 }, (_, i) => 1900 + i);
 const generateMonths = () => Array.from({ length: 12 }, (_, i) => i + 1);
 const generateDays = (year: number, month: number) => {
-  const daysInMonth = Temporal.ZonedDateTime.from({
-    year,
-    month,
-    day: 1,
-    hour: 0,
-    minute: 0,
-    second: 0,
-    millisecond: 0,
-    timeZone: Temporal.Now.zonedDateTimeISO().timeZoneId,
-  }).daysInMonth;
+  const daysInMonth = Temporal.PlainDate.from({ year, month, day: 1 }).daysInMonth;
   return Array.from({ length: daysInMonth }, (_, i) => i + 1);
 };
 
@@ -50,15 +41,14 @@ export function DatePicker({ visible, currentDate, onSelectDate, onCancel }: Dat
   
   const parseCurrentDate = () => {
     try {
-      const zonedDateTime = parseZonedDateTimeString(currentDate);
-      const plainDate = zonedDateTime.toPlainDate();
+      const plainDate = parsePlainDateString(currentDate);
       return {
         year: plainDate.year,
         month: plainDate.month,
         day: plainDate.day,
       };
     } catch {
-      const today = Temporal.Now.zonedDateTimeISO();
+      const today = Temporal.Now.plainDateISO();
       return {
         year: today.year,
         month: today.month,

@@ -1,13 +1,13 @@
 import { StyleSheet, View, TouchableOpacity, Text, useColorScheme } from 'react-native';
 import { Temporal } from 'temporal-polyfill';
-import type { DailyScore } from '@/types';
-import { createZonedDateTimeString } from '@/utils/temporal';
+import type { ScoreEntry } from '@/types';
+import { getTodayPlainDateString } from '@/utils/temporal';
 import { Colors } from '@/constants/theme';
 
 interface YearViewProps {
   year: number;
-  scores: DailyScore[];
-  onDayPress: (dateZts: string) => void;
+  scores: ScoreEntry[];
+  onDayPress: (date: string) => void;
 }
 
 const getScoreColor = (score: number | undefined, isDark: boolean): string => {
@@ -78,35 +78,20 @@ export function YearView({ year, scores, onDayPress }: YearViewProps) {
   const isDark = colorScheme === 'dark';
   const colors = Colors[isDark ? 'dark' : 'light'];
   
-  const timeZone = Temporal.Now.zonedDateTimeISO().timeZoneId;
-  const scoresByDate = new Map<string, DailyScore>();
+  const scoresByDate = new Map<string, ScoreEntry>();
   scores.forEach((score) => {
-    const existing = scoresByDate.get(score.date_zts);
-    if (!existing || score.updated_at_timestamp_ms > existing.updated_at_timestamp_ms) {
-      scoresByDate.set(score.date_zts, score);
-    }
+    scoresByDate.set(score.date, score);
   });
 
-  const today = Temporal.Now.zonedDateTimeISO();
-  const todayZts = createZonedDateTimeString(today.year, today.month, today.day);
+  const todayPlainDate = getTodayPlainDateString();
 
-  const grid: (Temporal.ZonedDateTime | null)[][] = [];
+  const grid: (Temporal.PlainDate | null)[][] = [];
   
   for (let day = 1; day <= 31; day++) {
-    const row: (Temporal.ZonedDateTime | null)[] = [];
+    const row: (Temporal.PlainDate | null)[] = [];
     for (let month = 1; month <= 12; month++) {
       try {
-        const date = Temporal.ZonedDateTime.from({
-          year,
-          month,
-          day,
-          hour: 0,
-          minute: 0,
-          second: 0,
-          millisecond: 0,
-          timeZone,
-        });
-        
+        const date = Temporal.PlainDate.from({ year, month, day });
         if (date.month === month && date.day === day) {
           row.push(date);
         } else {
@@ -134,17 +119,17 @@ export function YearView({ year, scores, onDayPress }: YearViewProps) {
                 return <View key={`${rowIndex}-${colIndex}`} style={[styles.dayPlaceholder, { backgroundColor: colors.background }]} />;
               }
               
-              const dateZts = createZonedDateTimeString(day.year, day.month, day.day);
-              const score = scoresByDate.get(dateZts);
-              const isToday = dateZts === todayZts;
+              const dateString = day.toString();
+              const score = scoresByDate.get(dateString);
+              const isToday = dateString === todayPlainDate;
               const color = getScoreColor(score?.score, isDark);
               const textColor = getTextColorForScore(score?.score, isDark, colors.text);
 
               return (
                 <TouchableOpacity
-                  key={dateZts}
+                  key={dateString}
                   style={styles.dayContainer}
-                  onPress={() => onDayPress(dateZts)}>
+                  onPress={() => onDayPress(dateString)}>
                   <View
                     style={[
                       styles.daySquare,

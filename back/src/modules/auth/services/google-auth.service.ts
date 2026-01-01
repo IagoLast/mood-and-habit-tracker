@@ -2,8 +2,7 @@ import { Injectable, BadRequestException, UnauthorizedException, Inject } from '
 import { Pool } from 'pg';
 import { GoogleAuthDto } from '../dto/google-auth.dto';
 import { generateToken } from '../../../common/utils/jwt';
-import { getCurrentTimestampMs } from '../../../common/utils/timestamp';
-import { InitializeDefaultCategoriesService } from '../../categories/services/initialize-default-categories.service';
+import { InitializeDefaultCategoriesService } from '../../habits/services/initialize-default-categories.service';
 
 export interface GoogleAuthResult {
   token: string;
@@ -105,18 +104,16 @@ export class GoogleAuthService {
     let user;
     if (existingUser.rows.length > 0) {
       user = existingUser.rows[0];
-      const now = getCurrentTimestampMs();
       await this.pool.query(
-        'UPDATE users SET name = $1, email = $2, updated_at = CURRENT_TIMESTAMP, updated_at_timestamp_ms = $3 WHERE id = $4',
-        [name, email, now, user.id]
+        'UPDATE users SET name = $1, email = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+        [name, email, user.id]
       );
       user.name = name;
       user.email = email;
     } else {
-      const now = getCurrentTimestampMs();
       const result = await this.pool.query(
-        'INSERT INTO users (email, name, google_id, created_at_timestamp_ms, updated_at_timestamp_ms) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [email, name, googleId, now, now]
+        'INSERT INTO users (email, name, google_id) VALUES ($1, $2, $3) RETURNING *',
+        [email, name, googleId]
       );
       user = result.rows[0];
       await this.initializeDefaultCategoriesService.execute({ userId: user.id });

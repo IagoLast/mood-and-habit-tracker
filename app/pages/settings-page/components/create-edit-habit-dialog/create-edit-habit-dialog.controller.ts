@@ -1,7 +1,7 @@
-import type { Element } from '@/types';
+import type { Habit } from '@/types';
 
 interface UseCreateEditHabitDialogControllerParams {
-  editingHabit: Element | null;
+  editingHabit: Habit | null;
 }
 
 export function useCreateEditHabitDialogController({

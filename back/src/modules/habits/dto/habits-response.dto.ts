@@ -1,8 +1,8 @@
-import { CategoryResponseDto } from '../../categories/dto/category-response.dto';
-import { ElementResponseDto } from '../../elements/dto/element-response.dto';
+import { CategoryResponseDto } from './category-response.dto';
+import { HabitResponseDto } from './habit-response.dto';
 
 export interface HabitCategory extends CategoryResponseDto {
-  elements: ElementResponseDto[];
+  elements: HabitResponseDto[];
 }
 
 export class HabitsResponseDto {

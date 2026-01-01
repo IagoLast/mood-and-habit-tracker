@@ -3,9 +3,9 @@ import { Pool } from 'pg';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
 import { UpdateDayDto } from '../dto/update-day.dto';
 import { DayResponseDto } from '../dto/day-response.dto';
-import { getCurrentTimestampMs, dateStringToDateZts } from '../../../common/utils/timestamp';
-import { CategoriesRepository } from '../../categories/repositories/categories.repository';
-import { ElementsRepository } from '../../elements/repositories/elements.repository';
+import { dateStringToPlainDate } from '../../../common/utils/timestamp';
+import { CategoriesRepository } from '../../habits/repositories/categories.repository';
+import { HabitsRepository } from '../../habits/repositories/habits.repository';
 import { ScoresRepository } from '../../scores/repositories/scores.repository';
 import { CompletionsRepository } from '../repositories/completions.repository';
 
@@ -19,7 +19,7 @@ interface UpdateDayParams {
 export class UpdateDayService {
   constructor(
     @Inject('DATABASE_POOL') private readonly pool: Pool,
-    private readonly elementsRepository: ElementsRepository,
+    private readonly habitsRepository: HabitsRepository,
     private readonly categoriesRepository: CategoriesRepository,
     private readonly scoresRepository: ScoresRepository,
     private readonly completionsRepository: CompletionsRepository,
@@ -27,51 +27,46 @@ export class UpdateDayService {
 
   async execute(params: UpdateDayParams): Promise<DayResponseDto> {
     const { user, date, dto } = params;
-    const dateZts = dateStringToDateZts(date);
+    const plainDate = dateStringToPlainDate(date);
 
-    if (dto.date_zts && dto.date_zts !== dateZts) {
+    if (dto.date && dto.date !== plainDate) {
       throw new BadRequestException('Date mismatch');
     }
 
-    const elementIds = dto.elements.map((e) => e.elementId);
-    const hasAccess = await this.elementsRepository.verifyOwnershipBatch(elementIds, user.userId);
+    const habitIds = dto.elements.map((e) => e.elementId);
+    const hasAccess = await this.habitsRepository.verifyOwnershipBatch(habitIds, user.userId);
     if (!hasAccess) {
-      throw new NotFoundException('One or more elements not found');
+      throw new NotFoundException('One or more habits not found');
     }
 
     const completedElements = dto.elements.filter((e) => e.completed === 'COMPLETED');
 
+    let score: number | null = null;
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
 
-      let score: number | null = null;
       if (dto.score !== undefined && dto.score !== null) {
-        const now = getCurrentTimestampMs();
         score = await this.scoresRepository.upsertWithClient(client, {
           userId: user.userId,
-          dateZts,
+          date: plainDate,
           score: dto.score,
-          createdAtTimestampMs: now,
-          updatedAtTimestampMs: now,
         });
       } else if (dto.score === null) {
-        await this.scoresRepository.deleteWithClient(client, user.userId, dateZts);
+        await this.scoresRepository.deleteWithClient(client, user.userId, plainDate);
         score = null;
       }
 
-      await this.completionsRepository.deleteByUserIdAndDateZtsWithClient(
+      await this.completionsRepository.deleteByUserIdAndDateWithClient(
         client,
         user.userId,
-        dateZts,
+        plainDate,
       );
 
       if (completedElements.length > 0) {
-        const now = getCurrentTimestampMs();
         const completions = completedElements.map((e) => ({
-          elementId: e.elementId,
-          dateZts,
-          createdAtTimestampMs: now,
+          habitId: e.elementId,
+          date: plainDate,
         }));
         await this.completionsRepository.createBatchWithClient(client, completions);
       }
@@ -86,18 +81,18 @@ export class UpdateDayService {
 
     const categories = await this.categoriesRepository.findAllByUserId(user.userId);
     if (score === null && dto.score === undefined) {
-      score = await this.scoresRepository.findByUserIdAndDateZts(user.userId, dateZts);
+      score = await this.scoresRepository.findByUserIdAndDate(user.userId, plainDate);
     }
-    const completedElementIds = new Set(completedElements.map((e) => e.elementId));
+    const completedHabitIds = new Set(completedElements.map((e) => e.elementId));
 
     const dayCategories = [];
 
     for (const category of categories) {
-      const elements = await this.elementsRepository.findAllByCategoryId(category.id);
+      const habits = await this.habitsRepository.findAllByCategoryId(category.id);
 
-      const dayElements = elements.map((element) => ({
-        ...element,
-        completed: completedElementIds.has(element.id),
+      const dayElements = habits.map((habit) => ({
+        ...habit,
+        completed: completedHabitIds.has(habit.id),
       }));
 
       dayCategories.push({
@@ -107,7 +102,7 @@ export class UpdateDayService {
     }
 
     return {
-      date_zts: dateZts,
+      date: plainDate,
       score,
       categories: dayCategories,
     };

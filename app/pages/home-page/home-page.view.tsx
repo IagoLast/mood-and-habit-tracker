@@ -15,7 +15,7 @@ export function HomePageView() {
     loading,
     scores,
     selectedYear,
-    todayZts,
+    todayDate,
     yearPickerVisible,
     handleDayPress,
     handleYearPress,

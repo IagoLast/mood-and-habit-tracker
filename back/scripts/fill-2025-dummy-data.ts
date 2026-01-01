@@ -6,29 +6,6 @@ import { Temporal } from 'temporal-polyfill';
 const envFile = process.env.DOTENV_CONFIG_PATH || (fs.existsSync('.env.local') ? '.env.local' : '.env.production');
 dotenv.config({ path: envFile });
 
-function createZonedDateTimeString(
-  year: number,
-  month: number,
-  day: number,
-  timeZone?: string
-): string {
-  const tz = timeZone || Temporal.Now.zonedDateTimeISO().timeZoneId;
-  const zonedDateTime = Temporal.ZonedDateTime.from({
-    year,
-    month,
-    day,
-    hour: 0,
-    minute: 0,
-    second: 0,
-    millisecond: 0,
-    timeZone: tz,
-  });
-  return zonedDateTime.toString();
-}
-
-function getCurrentTimestampMs(): number {
-  return Temporal.Now.instant().epochMilliseconds;
-}
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -71,17 +48,17 @@ async function fill2025DummyData() {
       throw new Error('No categories found for user');
     }
 
-    const elementsResult = await pool.query(
-      `SELECT e.id FROM elements e
-       INNER JOIN categories c ON e.category_id = c.id
+    const habitsResult = await pool.query(
+      `SELECT h.id FROM habits h
+       INNER JOIN categories c ON h.category_id = c.id
        WHERE c.user_id = $1`,
       [userId]
     );
-    const elementIds = elementsResult.rows.map((row) => row.id);
-    console.log(`Found ${elementIds.length} elements`);
+    const habitIds = habitsResult.rows.map((row) => row.id);
+    console.log(`Found ${habitIds.length} habits`);
 
-    if (elementIds.length === 0) {
-      throw new Error('No elements found for user');
+    if (habitIds.length === 0) {
+      throw new Error('No habits found for user');
     }
 
     const client = await pool.connect();
@@ -109,8 +86,7 @@ async function fill2025DummyData() {
         console.log(`Processing ${month}/${year} (${daysInMonth} days, ${isSummerMonth ? 'summer' : 'regular'})...`);
 
         for (let day = 1; day <= daysInMonth; day++) {
-          const dateZts = createZonedDateTimeString(year, month, day, timeZone);
-          const now = getCurrentTimestampMs();
+          const plainDate = Temporal.PlainDate.from({ year, month, day }).toString();
 
           const score = isSummerMonth
             ? randomInt(8, 10)
@@ -119,46 +95,42 @@ async function fill2025DummyData() {
           await client.query(
             `INSERT INTO daily_scores (
               user_id, 
-              date_zts, 
-              score,
-              created_at_timestamp_ms,
-              updated_at_timestamp_ms
-            ) VALUES ($1, $2, $3, $4, $5) 
-            ON CONFLICT (user_id, date_zts) DO UPDATE SET 
+              date, 
+              score
+            ) VALUES ($1, $2, $3) 
+            ON CONFLICT (user_id, date) DO UPDATE SET 
               score = $3, 
-              updated_at = CURRENT_TIMESTAMP,
-              updated_at_timestamp_ms = $5`,
-            [userId, dateZts, score, now, now]
+              updated_at = CURRENT_TIMESTAMP`,
+            [userId, plainDate, score]
           );
           totalScores++;
 
           const completionRate = score / 10;
-          const numCompletions = Math.floor(elementIds.length * completionRate * randomInt(80, 100) / 100);
-          const selectedElements = elementIds
+          const numCompletions = Math.floor(habitIds.length * completionRate * randomInt(80, 100) / 100);
+          const selectedHabits = habitIds
             .sort(() => Math.random() - 0.5)
             .slice(0, numCompletions);
 
-          if (selectedElements.length > 0) {
-            const values = selectedElements
+          if (selectedHabits.length > 0) {
+            const values = selectedHabits
               .map((_, i) => {
-                const baseIndex = i * 3;
-                return `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`;
+                const baseIndex = i * 2;
+                return `($${baseIndex + 1}, $${baseIndex + 2})`;
               })
               .join(', ');
 
-            const params: (number | string | number)[] = [];
-            selectedElements.forEach((elementId) => {
-              params.push(elementId, dateZts, now);
+            const params: (number | string)[] = [];
+            selectedHabits.forEach((habitId) => {
+              params.push(habitId, plainDate);
             });
 
             await client.query(
-              `INSERT INTO daily_completions (element_id, date_zts, created_at_timestamp_ms) 
+              `INSERT INTO daily_completions (habit_id, date) 
                VALUES ${values}
-               ON CONFLICT (element_id, date_zts) DO UPDATE SET 
-                 created_at_timestamp_ms = EXCLUDED.created_at_timestamp_ms`,
+               ON CONFLICT (habit_id, date) DO NOTHING`,
               params
             );
-            totalCompletions += selectedElements.length;
+            totalCompletions += selectedHabits.length;
           }
         }
       }

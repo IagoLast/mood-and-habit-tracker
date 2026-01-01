@@ -21,40 +21,35 @@ export class CategoriesRepository {
     return result.rows[0] || null;
   }
 
-  async create(params: { name: string; userId: string; createdAtTimestampMs: number; updatedAtTimestampMs: number }) {
+  async create(params: { name: string; userId: string }) {
     const result = await this.pool.query(
       `INSERT INTO categories (
         name, 
-        user_id, 
-        created_at_timestamp_ms,
-        updated_at_timestamp_ms
-      ) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [params.name, params.userId, params.createdAtTimestampMs, params.updatedAtTimestampMs]
+        user_id
+      ) VALUES ($1, $2) RETURNING *`,
+      [params.name, params.userId]
     );
     return result.rows[0];
   }
 
-  async createAndReturnId(params: { name: string; userId: string; createdAtTimestampMs: number; updatedAtTimestampMs: number }) {
+  async createAndReturnId(params: { name: string; userId: string }) {
     const result = await this.pool.query(
       `INSERT INTO categories (
         name, 
-        user_id, 
-        created_at_timestamp_ms,
-        updated_at_timestamp_ms
-      ) VALUES ($1, $2, $3, $4) RETURNING id`,
-      [params.name, params.userId, params.createdAtTimestampMs, params.updatedAtTimestampMs]
+        user_id
+      ) VALUES ($1, $2) RETURNING id`,
+      [params.name, params.userId]
     );
     return result.rows[0].id;
   }
 
-  async update(params: { id: number; userId: string; name: string; updatedAtTimestampMs: number }) {
+  async update(params: { id: number; userId: string; name: string }) {
     const result = await this.pool.query(
       `UPDATE categories SET 
         name = $1, 
-        updated_at = CURRENT_TIMESTAMP,
-        updated_at_timestamp_ms = $2
-      WHERE id = $3 AND user_id = $4 RETURNING *`,
-      [params.name, params.updatedAtTimestampMs, params.id, params.userId]
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2 AND user_id = $3 RETURNING *`,
+      [params.name, params.id, params.userId]
     );
     return result.rows[0] || null;
   }

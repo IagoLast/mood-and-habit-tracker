@@ -2,39 +2,17 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { Temporal } from 'temporal-polyfill';
 import { useListScoresQuery } from '@/queries/scores.queries';
-import { getTodayZonedDateTimeString } from '@/utils/temporal';
-import { useAuth } from '@/contexts/auth.context';
+import { getTodayPlainDateString } from '@/utils/temporal';
 
 export function useHomePageController() {
   const router = useRouter();
-  const { user } = useAuth();
-  const today = Temporal.Now.zonedDateTimeISO();
+  const today = Temporal.Now.plainDateISO();
   const [selectedYear, setSelectedYear] = useState(today.year);
   const [yearPickerVisible, setYearPickerVisible] = useState(false);
 
   const dateRange = useMemo(() => {
-    const timeZone = Temporal.Now.zonedDateTimeISO().timeZoneId;
-    const startDate = Temporal.ZonedDateTime.from({
-      year: selectedYear,
-      month: 1,
-      day: 1,
-      hour: 0,
-      minute: 0,
-      second: 0,
-      millisecond: 0,
-      timeZone,
-    });
-
-    const endDate = Temporal.ZonedDateTime.from({
-      year: selectedYear + 1,
-      month: 1,
-      day: 1,
-      hour: 0,
-      minute: 0,
-      second: 0,
-      millisecond: 0,
-      timeZone,
-    }).subtract({ days: 1 });
+    const startDate = Temporal.PlainDate.from({ year: selectedYear, month: 1, day: 1 });
+    const endDate = Temporal.PlainDate.from({ year: selectedYear + 1, month: 1, day: 1 }).subtract({ days: 1 });
 
     return {
       startDate: startDate.toString(),
@@ -48,11 +26,10 @@ export function useHomePageController() {
   });
 
   const loading = isLoading;
+  const scoresArray = scores ?? [];
 
-  const handleDayPress = (dateZts: string) => {
-    const zonedDateTime = Temporal.ZonedDateTime.from(dateZts);
-    const dateString = zonedDateTime.toPlainDate().toString();
-    router.push(`/day/${dateString}`);
+  const handleDayPress = (date: string) => {
+    router.push(`/day/${date}`);
   };
 
   const handleYearPress = () => {
@@ -69,19 +46,17 @@ export function useHomePageController() {
   };
 
   const handleGoToToday = () => {
-    const todayZts = getTodayZonedDateTimeString();
-    const zonedDateTime = Temporal.ZonedDateTime.from(todayZts);
-    const dateString = zonedDateTime.toPlainDate().toString();
-    router.push(`/day/${dateString}`);
+    const todayDate = getTodayPlainDateString();
+    router.push(`/day/${todayDate}`);
   };
 
-  const todayZts = getTodayZonedDateTimeString();
+  const todayDate = getTodayPlainDateString();
 
   return {
     loading,
-    scores,
+    scores: scoresArray,
     selectedYear,
-    todayZts,
+    todayDate,
     yearPickerVisible,
     handleDayPress,
     handleYearPress,

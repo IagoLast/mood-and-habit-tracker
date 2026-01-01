@@ -3,18 +3,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { renderIcon } from '@/components/icon-picker';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import type { Category, Element } from '@/types';
+import type { Category, Habit } from '@/types';
 import { styles } from './settings-category.styles';
 
 interface SettingsCategoryProps {
   category: Category;
-  elements: Element[];
+  elements: Habit[];
   isExpanded: boolean;
   onToggle: () => void;
   onEditCategory: () => void;
   onDeleteCategory: () => void;
   onAddElement: () => void;
-  onEditElement: (element: Element) => void;
+  onEditElement: (element: Habit) => void;
   onDeleteElement: (elementId: number) => void;
 }
 
