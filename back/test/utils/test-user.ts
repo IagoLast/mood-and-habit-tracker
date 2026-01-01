@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { Pool } from 'pg';
-import { generateToken } from '../../src/modules/auth/utils/jwt';
+import { generateToken } from '../../src/common/utils/jwt';
 import { getCurrentTimestampMs } from '../../src/common/utils/timestamp';
 import { TEST_USER } from '../constants';
 
