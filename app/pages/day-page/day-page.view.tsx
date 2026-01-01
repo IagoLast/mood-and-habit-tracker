@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { commonStyles } from '@/constants/common.styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DatePickerModal } from '@/components/date-picker-modal';
+import { DatePicker } from '@/components/date-picker';
 import { DayCategoryView } from './components/day-category/day-category.view';
 import { useDayPageController } from './day-page.controller';
 import { styles } from './day-page.styles';
@@ -39,12 +39,13 @@ export function DayPageView() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[commonStyles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.tint} />
+          <Ionicons name="chevron-back" size={24} color={colors.tint} />
         </TouchableOpacity>
-        <Text style={[commonStyles.headerTitle, { color: colors.text, textTransform: 'capitalize' }]}>{formatDate(dateZts)}</Text>
-        <TouchableOpacity onPress={handleSelectDate} style={styles.dateButton}>
-          <Ionicons name="calendar" size={24} color={colors.tint} />
+        <TouchableOpacity onPress={handleSelectDate} style={styles.dateContainer}>
+          <Text style={[commonStyles.headerTitle, { color: colors.text, textTransform: 'capitalize' }]}>{formatDate(dateZts)}</Text>
+          <Ionicons name="chevron-down" size={20} color={colors.tint} />
         </TouchableOpacity>
+        <View style={commonStyles.placeholder} />
       </View>
 
       <ScrollView style={styles.scrollView}>
@@ -91,9 +92,9 @@ export function DayPageView() {
         )}
       </ScrollView>
 
-      <DatePickerModal
+      <DatePicker
         visible={datePickerVisible}
-        currentDate={getCurrentDateString()}
+        currentDate={dateZts}
         onSelectDate={handleConfirmDate}
         onCancel={handleCancelDatePicker}
       />

@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { YearView } from '@/components/year-view';
-import { YearPickerModal } from '@/components/year-picker-modal';
+import { YearPicker } from '@/components/year-picker';
 import { Colors } from '@/constants/theme';
 import { commonStyles } from '@/constants/common.styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -50,7 +50,7 @@ export function HomePageView() {
         </View>
       </View>
 
-      <YearPickerModal
+      <YearPicker
         visible={yearPickerVisible}
         currentYear={selectedYear}
         onSelectYear={handleSelectYear}

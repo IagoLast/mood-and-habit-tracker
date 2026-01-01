@@ -7,8 +7,12 @@ export const styles = StyleSheet.create({
   backButton: {
     padding: 4,
   },
-  dateButton: {
-    padding: 4,
+  dateContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   scrollView: {
     flex: 1,
