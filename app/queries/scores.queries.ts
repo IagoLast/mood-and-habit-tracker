@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { scoresRepository } from '@/repositories/scores.repository';
 import type { DailyScore } from '@/types';
 
-export function useListScoresQuery(args: { startDate?: string; endDate?: string }) {
+export function useListScoresQuery(args: { startDate?: string; endDate?: string; enabled?: boolean }) {
   return useQuery({
     queryKey: ['scores', 'list', args.startDate, args.endDate],
     queryFn: () => scoresRepository.list(args),
+    enabled: args.enabled !== false,
   });
 }
 

@@ -45,9 +45,10 @@ export class UpdateDayService {
     try {
       await client.query('BEGIN');
 
+      let score: number | null = null;
       if (dto.score !== undefined && dto.score !== null) {
         const now = getCurrentTimestampMs();
-        await this.scoresRepository.upsertWithClient(client, {
+        score = await this.scoresRepository.upsertWithClient(client, {
           userId: user.userId,
           dateZts,
           score: dto.score,
@@ -56,6 +57,7 @@ export class UpdateDayService {
         });
       } else if (dto.score === null) {
         await this.scoresRepository.deleteWithClient(client, user.userId, dateZts);
+        score = null;
       }
 
       await this.completionsRepository.deleteByUserIdAndDateZtsWithClient(
@@ -83,7 +85,9 @@ export class UpdateDayService {
     }
 
     const categories = await this.categoriesRepository.findAllByUserId(user.userId);
-    const score = await this.scoresRepository.findByUserIdAndDateZts(user.userId, dateZts);
+    if (score === null && dto.score === undefined) {
+      score = await this.scoresRepository.findByUserIdAndDateZts(user.userId, dateZts);
+    }
     const completedElementIds = new Set(completedElements.map((e) => e.elementId));
 
     const dayCategories = [];

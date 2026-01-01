@@ -82,10 +82,11 @@ export class ScoresRepository {
       ON CONFLICT (user_id, date_zts) DO UPDATE SET 
         score = $3, 
         updated_at = CURRENT_TIMESTAMP,
-        updated_at_timestamp_ms = $5`,
+        updated_at_timestamp_ms = $5
+      RETURNING score`,
       [params.userId, params.dateZts, params.score, params.createdAtTimestampMs, params.updatedAtTimestampMs]
     );
-    return result;
+    return result.rows[0]?.score ?? null;
   }
 
   async deleteWithClient(client: any, userId: string, dateZts: string) {

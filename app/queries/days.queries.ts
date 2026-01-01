@@ -57,6 +57,7 @@ export function useUpdateDayMutation() {
     onSuccess: (data: DayData, variables: { date: string; data: UpdateDayRequest }) => {
       queryClient.setQueryData(['days', 'get', variables.date], data);
       queryClient.invalidateQueries({ queryKey: ['days', 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['scores'] });
     },
   });
 }
