@@ -82,16 +82,43 @@ export const authService = {
   },
 
   async exchangeCodeForToken(code: string, redirectUri: string, codeVerifier?: string): Promise<{ token: string; user: User }> {
-    const response = await client.post('/api/auth/google', { 
-      code, 
-      redirectUri,
-      codeVerifier,
-    });
-    const { token, user } = response.data;
+    console.log('[AUTH SERVICE] ========== EXCHANGE CODE FOR TOKEN ==========');
+    console.log('[AUTH SERVICE] Code:', code.substring(0, 20) + '...');
+    console.log('[AUTH SERVICE] Redirect URI:', redirectUri);
+    console.log('[AUTH SERVICE] Code Verifier:', codeVerifier ? codeVerifier.substring(0, 20) + '...' : 'undefined');
+    console.log('[AUTH SERVICE] API URL:', client.defaults.baseURL);
+    
+    try {
+      const payload = { 
+        code, 
+        redirectUri,
+        codeVerifier,
+      };
+      console.log('[AUTH SERVICE] Enviando payload al backend...');
+      const response = await client.post('/api/auth/google', payload);
+      console.log('[AUTH SERVICE] Respuesta recibida:', response.status, response.statusText);
+      
+      const { token, user } = response.data;
+      console.log('[AUTH SERVICE] Token recibido:', token ? '✓' : '✗');
+      console.log('[AUTH SERVICE] User recibido:', user ? `✓ (${user.email})` : '✗');
 
-    await this.setToken(token);
-    await this.setUser(user);
-
-    return { token, user };
+      await this.setToken(token);
+      await this.setUser(user);
+      console.log('[AUTH SERVICE] ✓ Token y user guardados');
+      console.log('[AUTH SERVICE] ========== FIN EXCHANGE ==========');
+      return { token, user };
+    } catch (error: any) {
+      console.error('[AUTH SERVICE] ERROR en exchangeCodeForToken:');
+      console.error('[AUTH SERVICE] Error:', error);
+      if (error.response) {
+        console.error('[AUTH SERVICE] Response status:', error.response.status);
+        console.error('[AUTH SERVICE] Response data:', JSON.stringify(error.response.data, null, 2));
+      }
+      if (error.request) {
+        console.error('[AUTH SERVICE] Request:', error.request);
+      }
+      console.log('[AUTH SERVICE] ========== FIN EXCHANGE (ERROR) ==========');
+      throw error;
+    }
   },
 };

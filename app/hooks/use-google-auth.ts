@@ -17,16 +17,7 @@ const discovery = {
 };
 
 export function useGoogleAuth() {
-  // On web, use the current origin as redirect URI to ensure consistency
-  // This ensures the redirect URI matches what Google expects
-  const getRedirectUri = () => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      return window.location.origin;
-    }
-    return AuthSession.makeRedirectUri({ useProxy: false });
-  };
-
-  const redirectUri = getRedirectUri();
+  const redirectUri = AuthSession.makeRedirectUri();
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
@@ -40,64 +31,70 @@ export function useGoogleAuth() {
   );
 
   const login = async (): Promise<{ token: string; user: User }> => {
+    console.log('[GOOGLE AUTH] ========== INICIO LOGIN ==========');
+    console.log('[GOOGLE AUTH] Platform:', Platform.OS);
+    console.log('[GOOGLE AUTH] Client ID:', GOOGLE_CLIENT_ID ? '✓ Configurado' : '✗ NO CONFIGURADO');
+    
     if (!request) {
+      console.error('[GOOGLE AUTH] ERROR: Auth request not ready');
       throw new Error('Auth request not ready');
     }
 
     if (!GOOGLE_CLIENT_ID) {
+      console.error('[GOOGLE AUTH] ERROR: Google Client ID not configured');
       throw new Error('Google Client ID not configured');
     }
 
-    const platform = Platform.OS === 'web' ? 'Web' : 'Mobile';
+    console.log('[GOOGLE AUTH] Redirect URI configurado:', redirectUri);
+    console.log('[GOOGLE AUTH] Redirect URI del request:', request.redirectUri);
+    console.log('[GOOGLE AUTH] Code verifier existe:', !!request.codeVerifier);
+    console.log('[GOOGLE AUTH] Code challenge existe:', !!request.codeChallenge);
     
-    // Ensure we use the same redirect URI that was used in the authorization request
-    const finalRedirectUri = getRedirectUri();
-    
-    console.log('\n═══════════════════════════════════════════════════════════');
-    console.log('🔗 REDIRECT URI PARA GOOGLE CONSOLE:');
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log(`Plataforma: ${platform}`);
-    console.log(`Redirect URI: ${finalRedirectUri}`);
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log('📝 INSTRUCCIONES:');
-    console.log('1. Copia el URI de arriba EXACTAMENTE');
-    console.log('2. Ve a: https://console.cloud.google.com/apis/credentials');
-    console.log('3. Selecciona tu proyecto');
-    console.log('4. Abre tu OAuth 2.0 Client ID');
-    console.log('5. En "Authorized redirect URIs", haz clic en "+ ADD URI"');
-    console.log('6. Pega el URI copiado');
-    console.log('7. Haz clic en "SAVE"');
-    console.log('⚠️  IMPORTANTE: El URI debe coincidir EXACTAMENTE');
-    if (platform === 'Web') {
-      console.log('💡 NOTA: En web, el redirect URI suele ser tu URL actual');
-      console.log('   (ej: http://localhost:8081 o https://tu-dominio.com)');
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      console.log('[GOOGLE AUTH] Window location origin:', window.location.origin);
+      console.log('[GOOGLE AUTH] Window location href:', window.location.href);
     }
-    console.log('═══════════════════════════════════════════════════════════\n');
 
+    console.log('[GOOGLE AUTH] Abriendo Google OAuth...');
     const result = await promptAsync();
+    console.log('[GOOGLE AUTH] Resultado recibido:', result.type);
+    console.log('[GOOGLE AUTH] Result completo:', JSON.stringify(result, null, 2));
 
     if (result.type !== 'success') {
+      console.error('[GOOGLE AUTH] ERROR: Autenticación cancelada o fallida');
       throw new Error('Google authentication cancelled or failed');
-    }
-
-    // Log the full result for debugging
-    if (Platform.OS === 'web') {
-      console.log('Auth result:', JSON.stringify(result, null, 2));
-      if (typeof window !== 'undefined') {
-        console.log('Current URL:', window.location.href);
-        console.log('Current origin:', window.location.origin);
-      }
     }
 
     const { code } = result.params;
     if (!code) {
+      console.error('[GOOGLE AUTH] ERROR: No se recibió código de autorización');
       throw new Error('No authorization code received from Google');
     }
 
+    console.log('[GOOGLE AUTH] Código recibido:', code.substring(0, 20) + '...');
     const codeVerifier = request.codeVerifier || undefined;
+    const finalRedirectUri = request.redirectUri || redirectUri;
+    
+    console.log('[GOOGLE AUTH] Enviando al backend:');
+    console.log('[GOOGLE AUTH]   - Code:', code.substring(0, 20) + '...');
+    console.log('[GOOGLE AUTH]   - Redirect URI:', finalRedirectUri);
+    console.log('[GOOGLE AUTH]   - Code Verifier:', codeVerifier ? '✓ Presente' : '✗ No presente');
 
-    // Use the same redirect URI that was used in the authorization request
-    return await authService.exchangeCodeForToken(code, finalRedirectUri, codeVerifier);
+    try {
+      const result = await authService.exchangeCodeForToken(code, finalRedirectUri, codeVerifier);
+      console.log('[GOOGLE AUTH] ✓ Login exitoso');
+      console.log('[GOOGLE AUTH] ========== FIN LOGIN ==========');
+      return result;
+    } catch (error) {
+      console.error('[GOOGLE AUTH] ERROR en exchangeCodeForToken:');
+      console.error('[GOOGLE AUTH] Error:', error);
+      if (error instanceof Error) {
+        console.error('[GOOGLE AUTH] Error message:', error.message);
+        console.error('[GOOGLE AUTH] Error stack:', error.stack);
+      }
+      console.log('[GOOGLE AUTH] ========== FIN LOGIN (ERROR) ==========');
+      throw error;
+    }
   };
 
   return {
