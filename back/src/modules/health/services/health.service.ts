@@ -39,6 +39,18 @@ export class HealthService {
           totalConnections: parseInt(statsResult.rows[0]?.total || '0', 10),
           idleConnections: parseInt(statsResult.rows[0]?.idle || '0', 10),
         },
+        environment: {
+          NODE_ENV: process.env.NODE_ENV || 'not set',
+          PORT: process.env.PORT || 'not set',
+          DB_HOST: process.env.DB_HOST || 'not set',
+          DB_PORT: process.env.DB_PORT || 'not set',
+          DB_NAME: process.env.DB_NAME || 'not set',
+          DB_USER: process.env.DB_USER || 'not set',
+          DB_PASSWORD: process.env.DB_PASSWORD || 'not set',
+          JWT_SECRET: process.env.JWT_SECRET || 'not set',
+          GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || 'not set',
+          GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || 'not set',
+        },
         timestamp,
       };
     } catch (error) {
@@ -50,6 +62,18 @@ export class HealthService {
         database: {
           connected: false,
           responseTimeMs,
+        },
+        environment: {
+          NODE_ENV: process.env.NODE_ENV || 'not set',
+          PORT: process.env.PORT || 'not set',
+          DB_HOST: process.env.DB_HOST || 'not set',
+          DB_PORT: process.env.DB_PORT || 'not set',
+          DB_NAME: process.env.DB_NAME || 'not set',
+          DB_USER: process.env.DB_USER || 'not set',
+          DB_PASSWORD: process.env.DB_PASSWORD || 'not set',
+          JWT_SECRET: process.env.JWT_SECRET || 'not set',
+          GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || 'not set',
+          GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || 'not set',
         },
         timestamp,
       };

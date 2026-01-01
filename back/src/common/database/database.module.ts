@@ -8,16 +8,24 @@ import { Pool } from 'pg';
       provide: 'DATABASE_POOL',
       useFactory: () => {
         const logger = new Logger('DatabasePool');
+        const isProduction = process.env.NODE_ENV === 'production';
+        const sslConfig = isProduction 
+          ? { rejectUnauthorized: false } // En producción (Vercel) generalmente se requiere SSL
+          : false;
+        
+        logger.log(`Connecting to database: ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5433'}/${process.env.DB_NAME || 'habittracker'}`);
+        logger.log(`SSL enabled: ${!!sslConfig}`);
+        
         const pool = new Pool({
           host: process.env.DB_HOST || 'localhost',
           port: parseInt(process.env.DB_PORT || '5433'),
           database: process.env.DB_NAME || 'habittracker',
           user: process.env.DB_USER || 'habituser',
           password: process.env.DB_PASSWORD || 'habitpass',
-          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+          ssl: sslConfig,
           max: 20,
           idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 5000,
+          connectionTimeoutMillis: 10000, // Aumentado para producción
           allowExitOnIdle: true,
         });
 
