@@ -1,0 +1,22 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": ".e2e.spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": ["ts-jest", {
+      "tsconfig": {
+        "types": ["jest", "node"]
+      }
+    }]
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(jose)/)"
+  ],
+  "moduleNameMapper": {
+    "^@/(.*)$": "<rootDir>/src/$1"
+  },
+  "setupFilesAfterEnv": ["<rootDir>/test/setup-files-after-env/jest.setup.ts"],
+  "globalSetup": "<rootDir>/test/setup-files/jest.setup.ts",
+  "globalTeardown": "<rootDir>/test/setup-files/jest.teardown.ts"
+}

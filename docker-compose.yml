@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: habit-tracker-db
+    environment:
+      POSTGRES_USER: habituser
+      POSTGRES_PASSWORD: habitpass
+      POSTGRES_DB: habittracker
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./back/db/A0000-init.sql:/docker-entrypoint-initdb.d/A0000-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habituser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
