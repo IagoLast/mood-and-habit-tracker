@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { commonStyles } from '@/constants/common.styles';
@@ -11,6 +11,7 @@ import { styles } from './day-page.styles';
 export function DayPageView() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { width } = useWindowDimensions();
   const {
     loading,
     categories,
@@ -26,6 +27,14 @@ export function DayPageView() {
     handleCancelDatePicker,
     getCurrentDateString,
   } = useDayPageController();
+
+  const SCORE_SECTION_PADDING = 20;
+  const SCORE_GAP = 6;
+  const NUM_SCORES = 10;
+  const availableWidth = width - (SCORE_SECTION_PADDING * 2);
+  const totalGapSpace = SCORE_GAP * (NUM_SCORES - 1);
+  const buttonSize = Math.max(36, Math.min(48, (availableWidth - totalGapSpace) / NUM_SCORES));
+  const fontSize = Math.max(14, Math.min(18, buttonSize * 0.5));
 
   if (loading) {
     return (
@@ -51,20 +60,26 @@ export function DayPageView() {
       <ScrollView style={styles.scrollView}>
         <View style={[styles.scoreSection, { backgroundColor: colors.background }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Estado de ánimo</Text>
-          <View style={styles.scoreContainer}>
+          <View style={[styles.scoreContainer, { gap: SCORE_GAP }]}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => (
               <TouchableOpacity
                 key={s}
                 style={[
                   styles.scoreButton,
-                  { borderColor: colors.icon + '33', backgroundColor: colors.background },
+                  {
+                    width: buttonSize,
+                    height: buttonSize,
+                    borderRadius: buttonSize / 2,
+                    borderColor: colors.icon + '33',
+                    backgroundColor: colors.background,
+                  },
                   score === s && [styles.scoreButtonSelected, { backgroundColor: colors.tint, borderColor: colors.tint }],
                 ]}
                 onPress={() => handleScorePress(s)}>
                 <Text
                   style={[
                     styles.scoreText,
-                    { color: colors.icon },
+                    { fontSize, color: colors.icon },
                     score === s && [styles.scoreTextSelected, { color: colorScheme === 'dark' ? '#000' : '#fff' }],
                   ]}>
                   {s}

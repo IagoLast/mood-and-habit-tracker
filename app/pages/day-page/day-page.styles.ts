@@ -28,20 +28,15 @@ export const styles = StyleSheet.create({
   },
   scoreContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    flexWrap: 'nowrap',
   },
   scoreButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   scoreButtonSelected: {},
   scoreText: {
-    fontSize: 18,
     fontWeight: '600',
   },
   scoreTextSelected: {},
