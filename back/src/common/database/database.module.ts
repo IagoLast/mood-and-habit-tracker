@@ -13,7 +13,7 @@ import { Pool } from 'pg';
           ? { rejectUnauthorized: false } // En producción (Vercel) generalmente se requiere SSL
           : false;
         
-        logger.log(`Connecting to database: ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5433'}/${process.env.DB_NAME || 'habittracker'}`);
+        logger.log('Connecting to database...');
         logger.log(`SSL enabled: ${!!sslConfig}`);
         
         const pool = new Pool({
