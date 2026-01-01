@@ -12,6 +12,12 @@ import { HealthModule } from './modules/health/health.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: process.env.NODE_ENV === 'production' 
+        ? undefined // En producción (Vercel), las variables vienen del entorno, no de archivos
+        : process.env.NODE_ENV === 'test'
+        ? '.env.test'
+        : '.env.local',
+      ignoreEnvFile: process.env.NODE_ENV === 'production', // Ignorar archivos .env en producción
     }),
     DatabaseModule,
     AuthModule,

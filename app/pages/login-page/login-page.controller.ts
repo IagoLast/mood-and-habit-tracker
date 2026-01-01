@@ -23,14 +23,18 @@ export function useLoginPageController() {
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
+      console.log('[Login Controller] Iniciando login con Google...');
       await login(googleLogin);
+      console.log('[Login Controller] Login exitoso, redirigiendo...');
       router.replace('/(tabs)');
     } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert(
-        'Error de autenticación',
-        error instanceof Error ? error.message : 'No se pudo iniciar sesión. Por favor, intenta de nuevo.'
-      );
+      console.error('[Login Controller] Error completo:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'No se pudo iniciar sesión. Por favor, intenta de nuevo.';
+      
+      console.error('[Login Controller] Mensaje de error:', errorMessage);
+      Alert.alert('Error de autenticación', errorMessage);
     } finally {
       setLoading(false);
     }

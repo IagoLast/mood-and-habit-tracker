@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { client } from '@/client/api-client';
 import type { User } from '@/types';
 
@@ -5,39 +6,58 @@ const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
 
 export const authService = {
-  getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+  async getToken(): Promise<string | null> {
+    return await AsyncStorage.getItem(TOKEN_KEY);
   },
 
-  setToken(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
+  async setToken(token: string): Promise<void> {
+    await AsyncStorage.setItem(TOKEN_KEY, token);
   },
 
-  getUser(): User | null {
-    const json = localStorage.getItem(USER_KEY);
+  async getUser(): Promise<User | null> {
+    const json = await AsyncStorage.getItem(USER_KEY);
     return json ? JSON.parse(json) : null;
   },
 
-  setUser(user: User): void {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  async setUser(user: User): Promise<void> {
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
   },
 
-  clearAuth(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+  async clearAuth(): Promise<void> {
+    await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
   },
 
-  isAuthenticated(): boolean {
-    return this.getToken() !== null;
+  async isAuthenticated(): Promise<boolean> {
+    const token = await this.getToken();
+    return token !== null;
   },
 
   async exchangeCodeForToken(code: string, redirectUri: string): Promise<{ token: string; user: User }> {
-    const response = await client.post('/api/auth/google', { code, redirectUri });
-    const { token, user } = response.data;
-    
-    this.setToken(token);
-    this.setUser(user);
-    
-    return { token, user };
+    try {
+      console.log('[Auth Service] Enviando código al backend...');
+      const response = await client.post('/api/auth/google', { code, redirectUri });
+      
+      if (!response.data || !response.data.token || !response.data.user) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+      
+      const { token, user } = response.data;
+      
+      await this.setToken(token);
+      await this.setUser(user);
+      
+      console.log('[Auth Service] Token guardado exitosamente');
+      return { token, user };
+    } catch (error: any) {
+      console.error('[Auth Service] Error al intercambiar código:', error);
+      if (error.response) {
+        const message = error.response.data?.message || error.response.data?.error || 'Error del servidor';
+        throw new Error(`Error del servidor: ${message}`);
+      } else if (error.request) {
+        throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté corriendo.');
+      } else {
+        throw error instanceof Error ? error : new Error('Error desconocido');
+      }
+    }
   },
 };

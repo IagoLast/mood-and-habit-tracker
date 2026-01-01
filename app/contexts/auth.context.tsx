@@ -16,10 +16,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authService.isAuthenticated()) {
-      setUser(authService.getUser());
+    async function checkAuth() {
+      if (await authService.isAuthenticated()) {
+        const userData = await authService.getUser();
+        setUser(userData);
+      }
+      setLoading(false);
     }
-    setLoading(false);
+    checkAuth();
   }, []);
 
   const login = async (loginFn: () => Promise<{ token: string; user: User }>) => {
@@ -27,8 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(loggedInUser);
   };
 
-  const logout = () => {
-    authService.clearAuth();
+  const logout = async () => {
+    await authService.clearAuth();
     setUser(null);
   };
 

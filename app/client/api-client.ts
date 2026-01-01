@@ -10,8 +10,8 @@ export const client = axios.create({
   },
 });
 
-client.interceptors.request.use(config => {
-  const token = authService.getToken();
+client.interceptors.request.use(async config => {
+  const token = await authService.getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -20,9 +20,9 @@ client.interceptors.request.use(config => {
 
 client.interceptors.response.use(
   response => response,
-  error => {
+  async error => {
     if (error.response?.status === 401) {
-      authService.clearAuth();
+      await authService.clearAuth();
     }
     return Promise.reject(error);
   }

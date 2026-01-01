@@ -37,21 +37,40 @@ export class GoogleAuthService {
   }
 
   private async exchangeCodeForAccessToken(code: string, redirectUri: string): Promise<string> {
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      throw new UnauthorizedException('Google OAuth credentials not configured');
+    }
+
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code,
-        client_id: process.env.GOOGLE_CLIENT_ID!,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new UnauthorizedException(error.error_description || error.error);
+      const error = await response.json().catch(() => ({}));
+      const errorMessage = error.error_description || error.error || 'Unknown error';
+      
+      console.error('[Google Auth Service] Error exchanging code:', {
+        error: error.error,
+        error_description: error.error_description,
+        redirectUri,
+      });
+      
+      if (error.error === 'invalid_grant') {
+        throw new UnauthorizedException(
+          `Invalid authorization code or redirect URI mismatch. Redirect URI used: ${redirectUri}. ` +
+          `Make sure this URI is registered in Google Cloud Console.`
+        );
+      }
+      
+      throw new UnauthorizedException(`Google OAuth error: ${errorMessage}`);
     }
 
     const data = await response.json();

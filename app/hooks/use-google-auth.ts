@@ -1,84 +1,112 @@
+import { useState } from 'react';
+import { Platform } from 'react-native';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
 import { authService } from '@/services/auth.service';
 import type { User } from '@/types';
 
+WebBrowser.maybeCompleteAuthSession();
+
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
-const REDIRECT_URI = process.env.EXPO_PUBLIC_REDIRECT_URI || window.location.origin;
 
-function generateState(): string {
-  return Math.random().toString(36).substring(2, 15);
-}
-
-function buildGoogleAuthUrl(state: string): string {
-  const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
-    response_type: 'code',
-    scope: 'openid email profile',
-    state,
-    prompt: 'select_account',
+const getRedirectUri = () => {
+  if (process.env.EXPO_PUBLIC_REDIRECT_URI) {
+    return process.env.EXPO_PUBLIC_REDIRECT_URI;
+  }
+  
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      console.log('[Google Auth] Web redirect URI:', origin);
+      return origin;
+    }
+    return '';
+  }
+  
+  const uri = AuthSession.makeRedirectUri({
+    scheme: 'books',
+    path: 'auth',
   });
-  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-}
+  console.log('[Google Auth] Native redirect URI:', uri);
+  return uri;
+};
+
+const discovery = {
+  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+  tokenEndpoint: 'https://oauth2.googleapis.com/token',
+};
 
 export function useGoogleAuth() {
+  const [isLoading, setIsLoading] = useState(false);
+
   const login = async (): Promise<{ token: string; user: User }> => {
-    return new Promise((resolve, reject) => {
-      const state = generateState();
-      sessionStorage.setItem('oauth_state', state);
-
-      const authUrl = buildGoogleAuthUrl(state);
-      const popup = window.open(authUrl, 'google-auth', 'width=500,height=600');
-
-      if (!popup) {
-        reject(new Error('Popup blocked'));
-        return;
+    setIsLoading(true);
+    try {
+      if (!GOOGLE_CLIENT_ID) {
+        throw new Error('GOOGLE_CLIENT_ID no está configurado. Verifica las variables de entorno.');
       }
 
-      const checkPopup = setInterval(() => {
-        try {
-          if (popup.closed) {
-            clearInterval(checkPopup);
-            reject(new Error('Popup closed'));
-            return;
-          }
+      const redirectUri = getRedirectUri();
+      
+      if (!redirectUri) {
+        throw new Error('No se pudo determinar el redirect URI');
+      }
 
-          const popupUrl = popup.location.href;
-          if (popupUrl.startsWith(REDIRECT_URI)) {
-            clearInterval(checkPopup);
-            popup.close();
+      console.log('[Google Auth] Iniciando autenticación...');
+      console.log('[Google Auth] Client ID:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
+      console.log('[Google Auth] Redirect URI:', redirectUri);
+      console.log('[Google Auth] Platform:', Platform.OS);
 
-            const url = new URL(popupUrl);
-            const code = url.searchParams.get('code');
-            const returnedState = url.searchParams.get('state');
-            const error = url.searchParams.get('error');
+      const request = new AuthSession.AuthRequest({
+        clientId: GOOGLE_CLIENT_ID,
+        scopes: ['openid', 'email', 'profile'],
+        responseType: AuthSession.ResponseType.Code,
+        redirectUri,
+        usePKCE: false,
+      });
 
-            if (error) {
-              reject(new Error(error));
-              return;
-            }
+      console.log('[Google Auth] Abriendo navegador para autenticación...');
+      const result = await request.promptAsync(discovery);
 
-            if (returnedState !== sessionStorage.getItem('oauth_state')) {
-              reject(new Error('State mismatch'));
-              return;
-            }
+      console.log('[Google Auth] Resultado:', result.type);
 
-            if (!code) {
-              reject(new Error('No code received'));
-              return;
-            }
+      if (result.type === 'success') {
+        const { code, error, error_description } = result.params;
 
-            sessionStorage.removeItem('oauth_state');
-
-            authService.exchangeCodeForToken(code, REDIRECT_URI)
-              .then(resolve)
-              .catch(reject);
-          }
-        } catch {
-          // Cross-origin error - popup still on Google domain
+        if (error) {
+          console.error('[Google Auth] Error en respuesta:', error, error_description);
+          throw new Error(error_description || error || 'Error durante la autenticación');
         }
-      }, 100);
-    });
+
+        if (!code) {
+          console.error('[Google Auth] No se recibió código de autorización');
+          throw new Error('No se recibió el código de autorización de Google');
+        }
+
+        console.log('[Google Auth] Código recibido, intercambiando por token...');
+        console.log('[Google Auth] Redirect URI enviado al backend:', redirectUri);
+        
+        const authResult = await authService.exchangeCodeForToken(code, redirectUri);
+        console.log('[Google Auth] Autenticación exitosa');
+        return authResult;
+      } else if (result.type === 'error') {
+        const errorMsg = result.error?.message || result.error?.code || 'Error desconocido';
+        console.error('[Google Auth] Error:', result.error);
+        throw new Error(`Error de autenticación: ${errorMsg}`);
+      } else {
+        console.log('[Google Auth] Autenticación cancelada por el usuario');
+        throw new Error('Autenticación cancelada');
+      }
+    } catch (error) {
+      console.error('[Google Auth] Error completo:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Error desconocido durante la autenticación');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  return { login, isLoading: false };
+  return { login, isLoading };
 }
