@@ -2,17 +2,14 @@ import { Module } from '@nestjs/common';
 import { DaysController } from './days.controller';
 import { GetDayService } from './services/get-day.service';
 import { UpdateDayService } from './services/update-day.service';
+import { CompletionsRepository } from './repositories/completions.repository';
 import { CategoriesModule } from '../categories/categories.module';
 import { ElementsModule } from '../elements/elements.module';
 import { ScoresModule } from '../scores/scores.module';
-import { CompletionsModule } from '../completions/completions.module';
 
 @Module({
-  imports: [CategoriesModule, ElementsModule, ScoresModule, CompletionsModule],
+  imports: [CategoriesModule, ElementsModule, ScoresModule],
   controllers: [DaysController],
-  providers: [
-    GetDayService,
-    UpdateDayService,
-  ],
+  providers: [GetDayService, UpdateDayService, CompletionsRepository],
 })
 export class DaysModule {}

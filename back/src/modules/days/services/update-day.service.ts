@@ -7,7 +7,7 @@ import { getCurrentTimestampMs, dateStringToDateZts } from '../../../common/util
 import { CategoriesRepository } from '../../categories/repositories/categories.repository';
 import { ElementsRepository } from '../../elements/repositories/elements.repository';
 import { ScoresRepository } from '../../scores/repositories/scores.repository';
-import { CompletionsRepository } from '../../completions/repositories/completions.repository';
+import { CompletionsRepository } from '../repositories/completions.repository';
 
 interface UpdateDayParams {
   user: AuthenticatedUser;
@@ -58,7 +58,11 @@ export class UpdateDayService {
         await this.scoresRepository.deleteWithClient(client, user.userId, dateZts);
       }
 
-      await this.completionsRepository.deleteByUserIdAndDateZtsWithClient(client, user.userId, dateZts);
+      await this.completionsRepository.deleteByUserIdAndDateZtsWithClient(
+        client,
+        user.userId,
+        dateZts,
+      );
 
       if (completedElements.length > 0) {
         const now = getCurrentTimestampMs();

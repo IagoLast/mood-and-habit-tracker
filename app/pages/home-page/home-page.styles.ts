@@ -4,21 +4,6 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 50,
-    borderBottomWidth: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  addButton: {
-    padding: 4,
-  },
   content: {
     flex: 1,
     alignItems: 'center',
@@ -33,22 +18,8 @@ export const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 800,
   },
-  yearHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
   yearButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  yearTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    padding: 4,
   },
   loadingText: {
     textAlign: 'center',

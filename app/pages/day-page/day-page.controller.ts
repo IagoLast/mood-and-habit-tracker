@@ -7,7 +7,6 @@ import {
   getTodayZonedDateTimeString,
 } from '@/utils/temporal';
 import { useGetDayQuery, useUpdateDayMutation } from '@/queries/days.queries';
-import { useCreateCompletionMutation, useDeleteCompletionMutation } from '@/queries/completions.queries';
 
 export function useDayPageController() {
   const { date } = useLocalSearchParams<{ date: string }>();
@@ -24,30 +23,31 @@ export function useDayPageController() {
   const dateParam = date || dateZts.split('T')[0];
   const { data: dayData, isLoading } = useGetDayQuery({ date: dateParam });
   const updateDayMutation = useUpdateDayMutation();
-  const createCompletionMutation = useCreateCompletionMutation();
-  const deleteCompletionMutation = useDeleteCompletionMutation();
 
   const handleToggleCompletion = async (elementId: number) => {
     if (!dayData) return;
 
-    const currentCompleted = dayData.categories
+    const updatedElements = dayData.categories
       .flatMap((cat) => cat.elements)
-      .find((elem) => elem.id === elementId)?.completed ?? false;
-
-    const newCompleted = !currentCompleted;
+      .map((elem) => ({
+        elementId: elem.id,
+        completed:
+          elem.id === elementId
+            ? elem.completed
+              ? ('NOT_COMPLETED' as const)
+              : ('COMPLETED' as const)
+            : elem.completed
+              ? ('COMPLETED' as const)
+              : ('NOT_COMPLETED' as const),
+      }));
 
     try {
-      if (newCompleted) {
-        await createCompletionMutation.mutateAsync({
-          elementId,
-          dateZts: dayData.date_zts,
-        });
-      } else {
-        await deleteCompletionMutation.mutateAsync({
-          elementId,
-          dateZts: dayData.date_zts,
-        });
-      }
+      await updateDayMutation.mutateAsync({
+        date: dateParam,
+        data: {
+          elements: updatedElements,
+        },
+      });
     } catch (error) {
       Alert.alert('Error', 'No se pudo actualizar el estado');
       console.error(error);

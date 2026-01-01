@@ -19,14 +19,6 @@ export interface Element {
   updated_at_timestamp_ms: number;
 }
 
-export interface DailyCompletion {
-  id: number;
-  element_id: number;
-  date_zts: string;
-  created_at: string;
-  created_at_timestamp_ms: number;
-}
-
 export interface DailyScore {
   id: number;
   user_id: string;

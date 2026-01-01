@@ -1,12 +1,11 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable } from '@nestjs/common';
 import { AuthenticatedUser } from '../../../common/decorators/user.decorator';
 import { DayResponseDto, DayCategory, DayElement } from '../dto/day-response.dto';
 import { dateStringToDateZts } from '../../../common/utils/timestamp';
 import { CategoriesRepository } from '../../categories/repositories/categories.repository';
 import { ElementsRepository } from '../../elements/repositories/elements.repository';
 import { ScoresRepository } from '../../scores/repositories/scores.repository';
-import { CompletionsRepository } from '../../completions/repositories/completions.repository';
+import { CompletionsRepository } from '../repositories/completions.repository';
 
 interface GetDayParams {
   user: AuthenticatedUser;
@@ -16,7 +15,6 @@ interface GetDayParams {
 @Injectable()
 export class GetDayService {
   constructor(
-    @Inject('DATABASE_POOL') private readonly pool: Pool,
     private readonly categoriesRepository: CategoriesRepository,
     private readonly elementsRepository: ElementsRepository,
     private readonly scoresRepository: ScoresRepository,
@@ -29,7 +27,10 @@ export class GetDayService {
 
     const categories = await this.categoriesRepository.findAllByUserId(user.userId);
     const score = await this.scoresRepository.findByUserIdAndDateZts(user.userId, dateZts);
-    const completedElementIds = await this.completionsRepository.findByUserIdAndDateZts(user.userId, dateZts);
+    const completedElementIds = await this.completionsRepository.findByUserIdAndDateZts(
+      user.userId,
+      dateZts,
+    );
     const completedElementIdsSet = new Set(completedElementIds);
 
     const dayCategories: DayCategory[] = [];

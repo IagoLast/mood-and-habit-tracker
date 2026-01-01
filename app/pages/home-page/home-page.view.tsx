@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { YearView } from '@/components/year-view';
 import { Colors } from '@/constants/theme';
+import { commonStyles } from '@/constants/common.styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useHomePageController } from './home-page.controller';
 import { styles } from './home-page.styles';
@@ -29,30 +30,18 @@ export function HomePageView() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Habit Tracker</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => handleDayPress(todayZts)}>
-          <Ionicons name="add" size={24} color={colors.tint} />
+      <View style={[commonStyles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
+        <TouchableOpacity style={styles.yearButton} onPress={handlePreviousYear}>
+          <Ionicons name="chevron-back" size={24} color={colors.tint} />
+        </TouchableOpacity>
+        <Text style={[commonStyles.headerTitle, { color: colors.text }]}>{selectedYear}</Text>
+        <TouchableOpacity style={styles.yearButton} onPress={handleNextYear}>
+          <Ionicons name="chevron-forward" size={24} color={colors.tint} />
         </TouchableOpacity>
       </View>
 
       <View style={[styles.content, { backgroundColor: colors.background }]}>
         <View style={[styles.yearContainer, { backgroundColor: colors.background }]}>
-          <View style={styles.yearHeader}>
-            <TouchableOpacity
-              style={[styles.yearButton, { backgroundColor: colors.icon + '20' }]}
-              onPress={handlePreviousYear}>
-              <Ionicons name="chevron-back" size={20} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={[styles.yearTitle, { color: colors.text }]}>{selectedYear}</Text>
-            <TouchableOpacity
-              style={[styles.yearButton, { backgroundColor: colors.icon + '20' }]}
-              onPress={handleNextYear}>
-              <Ionicons name="chevron-forward" size={20} color={colors.text} />
-            </TouchableOpacity>
-          </View>
           <YearView year={selectedYear} scores={scores} onDayPress={handleDayPress} />
         </View>
       </View>

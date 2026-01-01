@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import { commonStyles } from '@/constants/common.styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useSettingsPageController } from './settings-page.controller';
 import { SettingsCategoryView } from './components/settings-category/settings-category.view';
@@ -49,9 +50,9 @@ export function SettingsPageView() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
-        <View style={styles.placeholder} />
-        <Text style={[styles.title, { color: colors.text }]}>Ajustes</Text>
+      <View style={[commonStyles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
+        <View style={commonStyles.placeholder} />
+        <Text style={[commonStyles.headerTitle, { color: colors.text }]}>Ajustes</Text>
         <TouchableOpacity style={styles.addButton} onPress={() => openCategoryModal()}>
           <Ionicons name="add" size={24} color={colors.tint} />
         </TouchableOpacity>

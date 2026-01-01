@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import { commonStyles } from '@/constants/common.styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useProfilePageController } from './profile-page.controller';
 import { styles } from './profile-page.styles';
@@ -20,10 +21,12 @@ export function ProfilePageView() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
-        <View style={styles.placeholder} />
-        <Text style={[styles.title, { color: colors.text }]}>Perfil</Text>
-        <View style={styles.placeholder} />
+      <View style={[commonStyles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
+        <View style={commonStyles.placeholder} />
+        <Text style={[commonStyles.headerTitle, { color: colors.text }]}>Perfil</Text>
+        <TouchableOpacity style={styles.logoutIconButton} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={24} color={colors.tint} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>

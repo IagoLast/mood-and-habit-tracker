@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
+import { commonStyles } from '@/constants/common.styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DayCategoryView } from './components/day-category/day-category.view';
 import { useDayPageController } from './day-page.controller';
@@ -30,12 +31,12 @@ export function DayPageView() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
+      <View style={[commonStyles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.tint} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>{formatDate(dateZts)}</Text>
-        <View style={styles.placeholder} />
+        <Text style={[commonStyles.headerTitle, { color: colors.text, textTransform: 'capitalize' }]}>{formatDate(dateZts)}</Text>
+        <View style={commonStyles.placeholder} />
       </View>
 
       <ScrollView style={styles.scrollView}>
