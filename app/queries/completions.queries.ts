@@ -21,6 +21,9 @@ export function useCreateCompletionMutation() {
         queryKey: ['completions', 'list', variables.elementId, variables.dateZts],
       });
       queryClient.invalidateQueries({ queryKey: ['completions', 'list', variables.elementId] });
+      const dateParam = variables.dateZts.split('T')[0];
+      queryClient.invalidateQueries({ queryKey: ['days', 'get', dateParam] });
+      queryClient.invalidateQueries({ queryKey: ['days', 'list'] });
     },
   });
 }
@@ -36,6 +39,9 @@ export function useDeleteCompletionMutation() {
         queryKey: ['completions', 'list', variables.elementId, variables.dateZts],
       });
       queryClient.invalidateQueries({ queryKey: ['completions', 'list', variables.elementId] });
+      const dateParam = variables.dateZts.split('T')[0];
+      queryClient.invalidateQueries({ queryKey: ['days', 'get', dateParam] });
+      queryClient.invalidateQueries({ queryKey: ['days', 'list'] });
     },
   });
 }

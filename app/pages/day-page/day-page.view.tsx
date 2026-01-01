@@ -1,8 +1,8 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { renderIcon } from '@/components/icon-picker';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { DayCategoryView } from './components/day-category/day-category.view';
 import { useDayPageController } from './day-page.controller';
 import { styles } from './day-page.styles';
 
@@ -12,11 +12,9 @@ export function DayPageView() {
   const {
     loading,
     categories,
-    elements,
     score,
     dateZts,
     formatDate,
-    isElementCompleted,
     handleToggleCompletion,
     handleScorePress,
     handleGoBack,
@@ -75,42 +73,11 @@ export function DayPageView() {
           </View>
         ) : (
           categories.map((category) => (
-            <View key={category.id} style={[styles.categoryCard, { backgroundColor: colors.background }]}>
-              <Text style={[styles.categoryName, { color: colors.text }]}>{category.name}</Text>
-
-              {(elements[category.id] || []).length === 0 ? (
-                <Text style={[styles.noElementsText, { color: colors.icon + 'CC' }]}>
-                  No hay tareas en esta categoría
-                </Text>
-              ) : (
-                (elements[category.id] || []).map((element) => {
-                  const isCompleted = isElementCompleted(element.id);
-                  return (
-                    <TouchableOpacity
-                      key={element.id}
-                      style={[styles.elementRow, { borderBottomColor: colors.icon + '33' }]}
-                      onPress={() => handleToggleCompletion(element.id)}>
-                      <View style={[styles.checkbox, { borderColor: colors.tint }]}>
-                        {isCompleted && <Ionicons name="checkmark" size={20} color={colors.tint} />}
-                      </View>
-                      {element.icon_name && (
-                        <View style={styles.elementIcon}>
-                          {renderIcon(element.icon_name, 20, isCompleted ? colors.icon + '99' : colors.tint)}
-                        </View>
-                      )}
-                      <Text
-                        style={[
-                          styles.elementName,
-                          { color: colors.text },
-                          isCompleted && [styles.elementNameCompleted, { color: colors.icon + '99' }],
-                        ]}>
-                        {element.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })
-              )}
-            </View>
+            <DayCategoryView
+              key={category.id}
+              category={category}
+              onElementToggle={handleToggleCompletion}
+            />
           ))
         )}
       </ScrollView>

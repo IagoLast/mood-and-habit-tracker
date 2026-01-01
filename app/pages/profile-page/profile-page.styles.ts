@@ -12,23 +12,21 @@ export const styles = StyleSheet.create({
     paddingTop: 60,
     borderBottomWidth: 1,
   },
+  placeholder: {
+    width: 32,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
-    padding: 20,
   },
-  profileCard: {
-    borderRadius: 12,
-    padding: 24,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  profileSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 32,
     alignItems: 'center',
   },
   avatarContainer: {
@@ -58,6 +56,10 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 8,
     textAlign: 'center',
+  },
+  actionsSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   logoutButton: {
     flexDirection: 'row',

@@ -25,7 +25,17 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "manifest": {
+        "name": "mat",
+        "shortName": "mat",
+        "description": "Good Choices App",
+        "themeColor": "#E6F4FE",
+        "backgroundColor": "#E6F4FE",
+        "startUrl": "/",
+        "display": "standalone",
+        "orientation": "portrait"
+      }
     },
     "plugins": [
       "expo-router",

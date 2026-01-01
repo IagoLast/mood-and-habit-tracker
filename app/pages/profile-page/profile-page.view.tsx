@@ -21,11 +21,13 @@ export function ProfilePageView() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
+        <View style={styles.placeholder} />
         <Text style={[styles.title, { color: colors.text }]}>Perfil</Text>
+        <View style={styles.placeholder} />
       </View>
 
       <View style={styles.content}>
-        <View style={[styles.profileCard, { backgroundColor: colors.background }]}>
+        <View style={styles.profileSection}>
           <View style={[styles.avatarContainer, { backgroundColor: colors.tint + '20' }]}>
             <Ionicons name="person" size={48} color={colors.tint} />
           </View>
@@ -37,12 +39,14 @@ export function ProfilePageView() {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={[styles.logoutButton, { backgroundColor: '#FF3B30' }]}
-          onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={20} color="#fff" />
-          <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
-        </TouchableOpacity>
+        <View style={styles.actionsSection}>
+          <TouchableOpacity
+            style={[styles.logoutButton, { backgroundColor: '#FF3B30' }]}
+            onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#fff" />
+            <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

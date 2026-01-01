@@ -71,50 +71,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-  categoryCard: {
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  categoryName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  noElementsText: {
-    fontStyle: 'italic',
-    marginTop: 8,
-  },
-  elementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderWidth: 2,
-    borderRadius: 6,
-    marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  elementIcon: {
-    marginRight: 12,
-  },
-  elementName: {
-    fontSize: 16,
-    flex: 1,
-  },
-  elementNameCompleted: {
-    textDecorationLine: 'line-through',
-  },
   loadingText: {
     textAlign: 'center',
     marginTop: 20,
