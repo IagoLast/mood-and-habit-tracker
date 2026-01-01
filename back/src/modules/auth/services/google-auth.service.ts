@@ -61,6 +61,13 @@ export class GoogleAuthService {
         payload = ticket.getPayload();
       } catch (error) {
         this.logger.error('Error exchanging code for token:', error);
+        this.logger.error('Code:', code);
+        this.logger.error('Redirect URI:', redirectUri);
+        this.logger.error('Has codeVerifier:', !!codeVerifier);
+        if (error instanceof Error) {
+          this.logger.error('Error message:', error.message);
+          this.logger.error('Error stack:', error.stack);
+        }
         throw new UnauthorizedException('Invalid authorization code');
       }
     } else if (googleToken) {

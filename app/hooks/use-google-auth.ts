@@ -17,9 +17,16 @@ const discovery = {
 };
 
 export function useGoogleAuth() {
-  const redirectUri = AuthSession.makeRedirectUri({
-    useProxy: false,
-  });
+  // On web, use the current origin as redirect URI to ensure consistency
+  // This ensures the redirect URI matches what Google expects
+  const getRedirectUri = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return AuthSession.makeRedirectUri({ useProxy: false });
+  };
+
+  const redirectUri = getRedirectUri();
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
@@ -43,11 +50,14 @@ export function useGoogleAuth() {
 
     const platform = Platform.OS === 'web' ? 'Web' : 'Mobile';
     
+    // Ensure we use the same redirect URI that was used in the authorization request
+    const finalRedirectUri = getRedirectUri();
+    
     console.log('\n═══════════════════════════════════════════════════════════');
     console.log('🔗 REDIRECT URI PARA GOOGLE CONSOLE:');
     console.log('═══════════════════════════════════════════════════════════');
     console.log(`Plataforma: ${platform}`);
-    console.log(`Redirect URI: ${redirectUri}`);
+    console.log(`Redirect URI: ${finalRedirectUri}`);
     console.log('═══════════════════════════════════════════════════════════');
     console.log('📝 INSTRUCCIONES:');
     console.log('1. Copia el URI de arriba EXACTAMENTE');
@@ -70,6 +80,15 @@ export function useGoogleAuth() {
       throw new Error('Google authentication cancelled or failed');
     }
 
+    // Log the full result for debugging
+    if (Platform.OS === 'web') {
+      console.log('Auth result:', JSON.stringify(result, null, 2));
+      if (typeof window !== 'undefined') {
+        console.log('Current URL:', window.location.href);
+        console.log('Current origin:', window.location.origin);
+      }
+    }
+
     const { code } = result.params;
     if (!code) {
       throw new Error('No authorization code received from Google');
@@ -77,7 +96,8 @@ export function useGoogleAuth() {
 
     const codeVerifier = request.codeVerifier || undefined;
 
-    return await authService.exchangeCodeForToken(code, redirectUri, codeVerifier);
+    // Use the same redirect URI that was used in the authorization request
+    return await authService.exchangeCodeForToken(code, finalRedirectUri, codeVerifier);
   };
 
   return {
