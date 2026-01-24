@@ -81,7 +81,7 @@ export function useGoogleAuth() {
           throw new Error('No se recibió el código de autorización');
         }
 
-        const authResult = await authService.exchangeCodeForToken(code, redirectUri);
+        const authResult = await authService.exchangeCodeForToken(code, redirectUri, clientId);
         return authResult;
       } else if (result.type === 'error') {
         throw new Error(`Error de autenticación: ${result.error?.message || 'Error desconocido'}`);

@@ -32,10 +32,10 @@ export const authService = {
     return token !== null;
   },
 
-  async exchangeCodeForToken(code: string, redirectUri: string): Promise<{ token: string; user: User }> {
+  async exchangeCodeForToken(code: string, redirectUri: string, clientId: string): Promise<{ token: string; user: User }> {
     try {
       console.log('[Auth Service] Enviando código al backend...');
-      const response = await client.post('/api/auth/google', { code, redirectUri });
+      const response = await client.post('/api/auth/google', { code, redirectUri, clientId });
       
       if (!response.data || !response.data.token || !response.data.user) {
         throw new Error('Respuesta inválida del servidor');
