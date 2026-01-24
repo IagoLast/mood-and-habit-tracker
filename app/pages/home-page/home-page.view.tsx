@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -11,6 +12,7 @@ import { styles } from './home-page.styles';
 
 export function HomePageView() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const {
@@ -56,7 +58,7 @@ export function HomePageView() {
         </View>
       </View>
 
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingBottom: insets.bottom }]}>
         <View style={styles.yearContainer}>
           <YearView year={selectedYear} scores={scores} onDayPress={handleDayPress} />
         </View>

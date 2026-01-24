@@ -1,4 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -13,6 +14,7 @@ import { styles } from './settings-page.styles';
 
 export function SettingsPageView() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user, logout } = useAuth();
@@ -70,7 +72,7 @@ export function SettingsPageView() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={[styles.scrollContent, { paddingBottom: 16 + insets.bottom }]}>
         {categories.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="folder-open-outline" size={48} color={colors.icon + '80'} />
