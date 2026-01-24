@@ -1,14 +1,14 @@
 import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { commonStyles } from '@/constants/common.styles';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DatePicker } from '@/components/date-picker';
 import { DayCategoryView } from './components/day-category/day-category.view';
 import { useDayPageController } from './day-page.controller';
 import { styles } from './day-page.styles';
 
 export function DayPageView() {
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { width } = useWindowDimensions();
@@ -17,15 +17,10 @@ export function DayPageView() {
     categories,
     score,
     date,
-    datePickerVisible,
     formatDate,
     handleToggleCompletion,
     handleScorePress,
     handleGoBack,
-    handleSelectDate,
-    handleConfirmDate,
-    handleCancelDatePicker,
-    getCurrentDateString,
   } = useDayPageController();
 
   const CARD_PADDING = 20;
@@ -47,19 +42,15 @@ export function DayPageView() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[commonStyles.header, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={colors.tint} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleSelectDate} style={styles.dateContainer}>
-          <Text style={[commonStyles.headerTitle, { color: colors.text, textTransform: 'capitalize' }]}>{formatDate(date)}</Text>
-          <Ionicons name="chevron-down" size={20} color={colors.tint} />
-        </TouchableOpacity>
-        <View style={commonStyles.placeholder} />
+        <Text style={[styles.dateText, { color: colors.text }]}>{formatDate(date)}</Text>
+        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Score Card */}
         <View style={[styles.scoreCard, { backgroundColor: colors.surface }]}>
           <View style={styles.scoreHeader}>
             <Text style={[styles.scoreTitle, { color: colors.text }]}>Estado de ánimo</Text>
@@ -95,7 +86,6 @@ export function DayPageView() {
           </View>
         </View>
 
-        {/* Categories */}
         {categories.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyText, { color: colors.icon }]}>No hay categorías aún</Text>
@@ -113,13 +103,6 @@ export function DayPageView() {
           ))
         )}
       </ScrollView>
-
-      <DatePicker
-        visible={datePickerVisible}
-        currentDate={date}
-        onSelectDate={handleConfirmDate}
-        onCancel={handleCancelDatePicker}
-      />
     </View>
   );
 }

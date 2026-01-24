@@ -1,14 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Temporal } from 'temporal-polyfill';
 import { getTodayPlainDateString, parsePlainDateString } from '@/utils/temporal';
 import { useGetDayQuery, useUpdateDayMutation } from '@/queries/days.queries';
 
 export function useDayPageController() {
   const { date } = useLocalSearchParams<{ date: string }>();
   const router = useRouter();
-  const [datePickerVisible, setDatePickerVisible] = useState(false);
 
   const dateParam = date || getTodayPlainDateString();
   const { data: dayData, isLoading } = useGetDayQuery({ date: dateParam });
@@ -72,23 +70,6 @@ export function useDayPageController() {
     router.push('/');
   };
 
-  const handleSelectDate = () => {
-    setDatePickerVisible(true);
-  };
-
-  const handleConfirmDate = (dateString: string) => {
-    router.push(`/day/${dateString}`);
-    setDatePickerVisible(false);
-  };
-
-  const handleCancelDatePicker = () => {
-    setDatePickerVisible(false);
-  };
-
-  const getCurrentDateString = (): string => {
-    return dateParam;
-  };
-
   const formatDate = (dateString: string): string => {
     const plainDate = parsePlainDateString(dateString);
     const dateFormatter = new Intl.DateTimeFormat('es-ES', {
@@ -111,14 +92,9 @@ export function useDayPageController() {
     categories,
     score: dayData?.score ?? null,
     date: dateParam,
-    datePickerVisible,
     formatDate,
     handleToggleCompletion,
     handleScorePress,
     handleGoBack,
-    handleSelectDate,
-    handleConfirmDate,
-    handleCancelDatePicker,
-    getCurrentDateString,
   };
 }

@@ -26,9 +26,9 @@ const getRedirectUri = () => {
   }
 
   if (Platform.OS === 'ios') {
-    // Usar el reversed client ID de iOS
+    // Usar el reversed client ID de iOS con el path estándar de Google
     const reversedClientId = GOOGLE_IOS_CLIENT_ID.split('.').reverse().join('.');
-    return `${reversedClientId}:/oauthredirect`;
+    return `${reversedClientId}:/oauth2redirect/google`;
   }
 
   // Android (para futuro)

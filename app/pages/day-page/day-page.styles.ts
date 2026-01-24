@@ -4,15 +4,23 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
   backButton: {
     padding: 4,
   },
-  dateContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+  dateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  placeholder: {
+    width: 32,
   },
   scrollView: {
     flex: 1,
