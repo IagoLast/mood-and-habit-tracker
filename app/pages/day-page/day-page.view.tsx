@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
@@ -11,7 +11,6 @@ export function DayPageView() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { width } = useWindowDimensions();
   const {
     loading,
     categories,
@@ -23,14 +22,7 @@ export function DayPageView() {
     handleGoBack,
   } = useDayPageController();
 
-  const CARD_PADDING = 20;
-  const CONTAINER_PADDING = 16;
-  const SCORE_GAP = 8;
-  const NUM_SCORES = 10;
-  const availableWidth = width - (CONTAINER_PADDING * 2) - (CARD_PADDING * 2);
-  const totalGapSpace = SCORE_GAP * (NUM_SCORES - 1);
-  const buttonSize = Math.max(28, Math.min(36, (availableWidth - totalGapSpace) / NUM_SCORES));
-  const fontSize = Math.max(12, Math.min(14, buttonSize * 0.45));
+  const SCORE_GAP = 6;
 
   if (loading) {
     return (
@@ -64,19 +56,14 @@ export function DayPageView() {
                 key={s}
                 style={[
                   styles.scoreButton,
-                  {
-                    width: buttonSize,
-                    height: buttonSize,
-                    borderRadius: buttonSize / 2,
-                    backgroundColor: colors.background,
-                  },
+                  { backgroundColor: colors.background },
                   score === s && [styles.scoreButtonSelected, { backgroundColor: colors.tint }],
                 ]}
                 onPress={() => handleScorePress(s)}>
                 <Text
                   style={[
                     styles.scoreText,
-                    { fontSize, color: colors.icon },
+                    { color: colors.icon },
                     score === s && [styles.scoreTextSelected, { color: colorScheme === 'dark' ? '#000' : '#fff' }],
                   ]}>
                   {s}

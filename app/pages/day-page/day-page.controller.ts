@@ -67,7 +67,7 @@ export function useDayPageController() {
   };
 
   const handleGoBack = () => {
-    router.push('/');
+    router.back();
   };
 
   const formatDate = (dateString: string): string => {

@@ -179,11 +179,11 @@ const styles = StyleSheet.create({
   },
   dayContainer: {
     flex: 1,
-    aspectRatio: 1,
+    flexShrink: 1,
   },
   dayPlaceholder: {
     flex: 1,
-    aspectRatio: 1,
+    flexShrink: 1,
     borderRadius: 6,
   },
   daySquare: {

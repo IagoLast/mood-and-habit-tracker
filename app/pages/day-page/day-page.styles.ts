@@ -63,8 +63,11 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   scoreButton: {
+    flex: 1,
+    aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 100,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -89,6 +92,7 @@ export const styles = StyleSheet.create({
     }),
   },
   scoreText: {
+    fontSize: 12,
     fontWeight: '600',
   },
   scoreTextSelected: {},
