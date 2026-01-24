@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
+  console.log(`[Middleware] ${request.method} ${request.nextUrl.pathname}`);
+
   // Handle preflight requests
   if (request.method === 'OPTIONS') {
+    console.log('[Middleware] Handling OPTIONS preflight');
     return new NextResponse(null, {
       status: 204,
       headers: {
