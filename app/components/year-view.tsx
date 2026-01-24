@@ -155,27 +155,27 @@ const styles = StyleSheet.create({
   },
   monthLabels: {
     flexDirection: 'row',
-    gap: 6,
-    paddingBottom: 8,
-    marginBottom: 6,
+    gap: 5,
+    paddingBottom: 4,
+    marginBottom: 4,
   },
   monthLabel: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   grid: {
     flex: 1,
     flexDirection: 'column',
-    gap: 5,
+    gap: 4,
     minHeight: 0,
   },
   row: {
     flex: 1,
     flexDirection: 'row',
-    gap: 5,
+    gap: 4,
   },
   dayContainer: {
     flex: 1,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   dayNumber: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '600',
   },
   todaySquare: {

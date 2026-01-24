@@ -9,8 +9,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 16,
-    paddingBottom: 12,
+    paddingTop: Platform.OS === 'ios' ? 50 : 12,
+    paddingBottom: 6,
   },
   yearButton: {
     flexDirection: 'row',
@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
     gap: 6,
   },
   yearText: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     letterSpacing: -0.5,
   },

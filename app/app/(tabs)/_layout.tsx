@@ -15,27 +15,29 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.icon,
+        tabBarShowLabel: false,
         tabBarStyle: {
+          position: 'absolute',
+          bottom: Platform.OS === 'ios' ? 28 : 16,
+          left: '50%',
+          transform: [{ translateX: '-50%' }],
+          width: 200,
+          height: 52,
           backgroundColor: colors.surface,
+          borderRadius: 26,
           borderTopWidth: 0,
-          paddingTop: 8,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          paddingHorizontal: 8,
           ...Platform.select({
             ios: {
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: 0.06,
-              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
             },
             android: {
-              elevation: 8,
+              elevation: 12,
             },
           }),
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
-          marginTop: 4,
         },
         headerShown: false,
       }}>
