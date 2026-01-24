@@ -1,8 +1,10 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuth } from '@/contexts/auth.context';
 import { useSettingsPageController } from './settings-page.controller';
 import { SettingsCategoryView } from './components/settings-category/settings-category.view';
 import { CreateEditCategoryDialogView as CreateEditCategoryDialog } from './components/create-edit-category-dialog/create-edit-category-dialog.view';
@@ -10,8 +12,10 @@ import { CreateEditHabitDialogView as CreateEditHabitDialog } from './components
 import { styles } from './settings-page.styles';
 
 export function SettingsPageView() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { user, logout } = useAuth();
   const {
     loading,
     categories,
@@ -57,6 +61,9 @@ export function SettingsPageView() {
   return (
     <LinearGradient colors={gradientColors} style={styles.container} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={28} color={colors.tint} />
+        </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text, fontFamily: Fonts?.default }]}>Ajustes</Text>
         <TouchableOpacity style={styles.addButton} onPress={() => openCategoryModal()}>
           <Ionicons name="add-circle-outline" size={26} color={colors.tint} />
@@ -89,6 +96,23 @@ export function SettingsPageView() {
               onDeleteElement={(elementId) => handleDeleteElement(elementId, category.id)}
             />
           ))
+        )}
+
+        {user && (
+          <View style={[styles.profileSection, { backgroundColor: colors.surface }]}>
+            <View style={styles.profileHeader}>
+              <View style={[styles.avatarContainer, { backgroundColor: colors.tint + '20' }]}>
+                <Ionicons name="person" size={20} color={colors.tint} />
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={[styles.userName, { color: colors.text }]}>{user.name}</Text>
+                <Text style={[styles.userEmail, { color: colors.icon }]}>{user.email}</Text>
+              </View>
+              <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+                <Ionicons name="log-out-outline" size={22} color={colors.icon} />
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
       </ScrollView>
 

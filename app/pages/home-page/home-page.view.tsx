@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { YearView } from '@/components/year-view';
 import { YearPicker } from '@/components/year-picker';
 import { Colors, Fonts } from '@/constants/theme';
@@ -9,6 +10,7 @@ import { useHomePageController } from './home-page.controller';
 import { styles } from './home-page.styles';
 
 export function HomePageView() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const {
@@ -44,9 +46,14 @@ export function HomePageView() {
           <Text style={[styles.yearText, { color: colors.text, fontFamily: Fonts?.default }]}>{selectedYear}</Text>
           <Ionicons name="chevron-down" size={18} color={colors.icon} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.todayButton} onPress={handleGoToToday}>
-          <Ionicons name="today-outline" size={22} color={colors.tint} />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleGoToToday}>
+            <Ionicons name="today-outline" size={22} color={colors.tint} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerButton} onPress={() => router.push('/settings')}>
+            <Ionicons name="settings-outline" size={22} color={colors.icon} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.content}>

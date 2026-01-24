@@ -7,28 +7,35 @@ import type { User } from '@/types';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
+
+const getClientId = () => {
+  if (Platform.OS === 'ios') {
+    return GOOGLE_IOS_CLIENT_ID;
+  }
+  return GOOGLE_WEB_CLIENT_ID;
+};
 
 const getRedirectUri = () => {
-  if (process.env.EXPO_PUBLIC_REDIRECT_URI) {
-    return process.env.EXPO_PUBLIC_REDIRECT_URI;
-  }
-  
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined') {
-      const origin = window.location.origin;
-      console.log('[Google Auth] Web redirect URI:', origin);
-      return origin;
+      return window.location.origin;
     }
     return '';
   }
-  
-  const uri = AuthSession.makeRedirectUri({
+
+  if (Platform.OS === 'ios') {
+    // Usar el reversed client ID de iOS
+    const reversedClientId = GOOGLE_IOS_CLIENT_ID.split('.').reverse().join('.');
+    return `${reversedClientId}:/oauthredirect`;
+  }
+
+  // Android (para futuro)
+  return AuthSession.makeRedirectUri({
     scheme: 'books',
     path: 'auth',
   });
-  console.log('[Google Auth] Native redirect URI:', uri);
-  return uri;
 };
 
 const discovery = {
@@ -42,66 +49,47 @@ export function useGoogleAuth() {
   const login = async (): Promise<{ token: string; user: User }> => {
     setIsLoading(true);
     try {
-      if (!GOOGLE_CLIENT_ID) {
-        throw new Error('GOOGLE_CLIENT_ID no está configurado. Verifica las variables de entorno.');
+      const clientId = getClientId();
+      const redirectUri = getRedirectUri();
+
+      if (!clientId) {
+        throw new Error('Google Client ID no configurado para esta plataforma');
       }
 
-      const redirectUri = getRedirectUri();
-      
       if (!redirectUri) {
         throw new Error('No se pudo determinar el redirect URI');
       }
 
-      console.log('[Google Auth] Iniciando autenticación...');
-      console.log('[Google Auth] Client ID:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
-      console.log('[Google Auth] Redirect URI:', redirectUri);
       console.log('[Google Auth] Platform:', Platform.OS);
+      console.log('[Google Auth] Client ID:', clientId.substring(0, 20) + '...');
+      console.log('[Google Auth] Redirect URI:', redirectUri);
 
       const request = new AuthSession.AuthRequest({
-        clientId: GOOGLE_CLIENT_ID,
+        clientId,
         scopes: ['openid', 'email', 'profile'],
         responseType: AuthSession.ResponseType.Code,
         redirectUri,
         usePKCE: false,
       });
 
-      console.log('[Google Auth] Abriendo navegador para autenticación...');
       const result = await request.promptAsync(discovery);
 
-      console.log('[Google Auth] Resultado:', result.type);
-
       if (result.type === 'success') {
-        const { code, error, error_description } = result.params;
-
-        if (error) {
-          console.error('[Google Auth] Error en respuesta:', error, error_description);
-          throw new Error(error_description || error || 'Error durante la autenticación');
-        }
+        const { code } = result.params;
 
         if (!code) {
-          console.error('[Google Auth] No se recibió código de autorización');
-          throw new Error('No se recibió el código de autorización de Google');
+          throw new Error('No se recibió el código de autorización');
         }
 
-        console.log('[Google Auth] Código recibido, intercambiando por token...');
-        console.log('[Google Auth] Redirect URI enviado al backend:', redirectUri);
-        
         const authResult = await authService.exchangeCodeForToken(code, redirectUri);
-        console.log('[Google Auth] Autenticación exitosa');
         return authResult;
       } else if (result.type === 'error') {
-        const errorMsg = result.error?.message || result.error?.code || 'Error desconocido';
-        console.error('[Google Auth] Error:', result.error);
-        throw new Error(`Error de autenticación: ${errorMsg}`);
+        throw new Error(`Error de autenticación: ${result.error?.message || 'Error desconocido'}`);
       } else {
-        console.log('[Google Auth] Autenticación cancelada por el usuario');
         throw new Error('Autenticación cancelada');
       }
     } catch (error) {
-      console.error('[Google Auth] Error completo:', error);
-      if (error instanceof Error) {
-        throw error;
-      }
+      if (error instanceof Error) throw error;
       throw new Error('Error desconocido durante la autenticación');
     } finally {
       setIsLoading(false);

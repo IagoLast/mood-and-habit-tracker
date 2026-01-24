@@ -22,7 +22,12 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.5,
   },
-  todayButton: {
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  headerButton: {
     padding: 8,
   },
   content: {

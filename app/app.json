@@ -5,12 +5,19 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "books",
+    "scheme": ["books", "com.googleusercontent.apps.667723889099-tbn4agoe5d2e5e75210c1jug92j4hbtv"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.iagolast.mat"
+      "bundleIdentifier": "com.iagolast.mat",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["com.googleusercontent.apps.667723889099-tbn4agoe5d2e5e75210c1jug92j4hbtv"]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
