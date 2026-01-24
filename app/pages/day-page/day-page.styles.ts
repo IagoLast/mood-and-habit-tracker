@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   container: {
@@ -17,25 +17,69 @@ export const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  scoreSection: {
+  scrollContent: {
+    padding: 16,
+    gap: 20,
+  },
+  scoreCard: {
+    borderRadius: 20,
     padding: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  scoreHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
+  scoreTitle: {
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 16,
+  },
+  scoreValue: {
+    fontSize: 32,
+    fontWeight: '700',
   },
   scoreContainer: {
     flexDirection: 'row',
-    flexWrap: 'nowrap',
+    justifyContent: 'space-between',
   },
   scoreButton: {
-    borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
-  scoreButtonSelected: {},
+  scoreButtonSelected: {
+    ...Platform.select({
+      ios: {
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
   scoreText: {
     fontWeight: '600',
   },

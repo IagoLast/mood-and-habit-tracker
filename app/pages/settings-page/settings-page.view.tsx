@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
-import { commonStyles } from '@/constants/common.styles';
+import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useSettingsPageController } from './settings-page.controller';
 import { SettingsCategoryView } from './components/settings-category/settings-category.view';
@@ -40,29 +40,37 @@ export function SettingsPageView() {
     toggleCategory,
   } = useSettingsPageController();
 
+  // Gradient colors based on theme
+  const gradientColors =
+    colorScheme === 'dark'
+      ? ([colors.background, '#1F1C19', colors.background] as const)
+      : ([colors.background, '#F5F1E8', colors.background] as const);
+
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient colors={gradientColors} style={styles.container} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <Text style={[styles.loadingText, { color: colors.text }]}>Cargando...</Text>
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[commonStyles.header, { backgroundColor: colors.background, borderBottomColor: colors.icon + '33' }]}>
-        <View style={commonStyles.placeholder} />
-        <Text style={[commonStyles.headerTitle, { color: colors.text }]}>Ajustes</Text>
+    <LinearGradient colors={gradientColors} style={styles.container} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: colors.text, fontFamily: Fonts?.default }]}>Ajustes</Text>
         <TouchableOpacity style={styles.addButton} onPress={() => openCategoryModal()}>
-          <Ionicons name="add" size={24} color={colors.tint} />
+          <Ionicons name="add-circle-outline" size={26} color={colors.tint} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {categories.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: colors.icon }]}>No hay categorías aún</Text>
-            <Text style={[styles.emptySubtext, { color: colors.icon + 'CC' }]}>
+            <Ionicons name="folder-open-outline" size={48} color={colors.icon + '80'} />
+            <Text style={[styles.emptyText, { color: colors.text, fontFamily: Fonts?.default }]}>
+              No hay categorías aún
+            </Text>
+            <Text style={[styles.emptySubtext, { color: colors.icon }]}>
               Crea tu primera categoría para comenzar
             </Text>
           </View>
@@ -103,6 +111,6 @@ export function SettingsPageView() {
         onSave={editingElement ? handleUpdateElement : handleCreateElement}
         onCancel={closeElementModal}
       />
-    </View>
+    </LinearGradient>
   );
 }

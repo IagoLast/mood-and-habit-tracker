@@ -1,37 +1,66 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   categorySection: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    gap: 12,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   categoryName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
+  },
+  habitCount: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   noElementsText: {
     fontStyle: 'italic',
-    marginTop: 8,
+    paddingVertical: 8,
   },
   elementsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
-  pill: {
+  habitCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
+    padding: 16,
+    borderRadius: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  pillIcon: {
-    marginRight: 6,
+  habitIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  pillText: {
-    fontSize: 14,
+  habitContent: {
+    flex: 1,
+  },
+  habitName: {
+    fontSize: 16,
     fontWeight: '500',
+  },
+  checkmark: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { renderIcon } from '@/components/icon-picker';
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Category, Habit } from '@/types';
 import { styles } from './settings-category.styles';
@@ -33,57 +33,69 @@ export function SettingsCategoryView({
   const colors = Colors[colorScheme ?? 'light'];
 
   return (
-    <View style={styles.categorySection}>
-      <View style={styles.categoryHeader}>
-        <TouchableOpacity style={styles.categoryTitleRow} onPress={onToggle}>
-          <Ionicons
-            name={isExpanded ? 'chevron-down' : 'chevron-forward'}
-            size={20}
-            color={colors.icon}
-          />
-          <Text style={[styles.categoryName, { color: colors.text }]}>{category.name}</Text>
-        </TouchableOpacity>
+    <View style={[styles.categoryCard, { backgroundColor: colors.surface }]}>
+      <TouchableOpacity style={styles.categoryHeader} onPress={onToggle} activeOpacity={0.7}>
+        <View style={styles.categoryTitleRow}>
+          <View style={[styles.categoryIconContainer, { backgroundColor: colors.tint + '20' }]}>
+            <Ionicons name="folder-outline" size={20} color={colors.tint} />
+          </View>
+          <Text style={[styles.categoryName, { color: colors.text, fontFamily: Fonts?.default }]}>
+            {category.name}
+          </Text>
+        </View>
         <View style={styles.categoryActions}>
           <TouchableOpacity style={styles.iconButton} onPress={onEditCategory}>
-            <Ionicons name="create-outline" size={20} color={colors.tint} />
+            <Ionicons name="pencil" size={18} color={colors.icon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={onDeleteCategory}>
-            <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+            <Ionicons name="trash" size={18} color="#C45C4A" />
           </TouchableOpacity>
+          <Ionicons
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color={colors.icon}
+            style={styles.chevron}
+          />
         </View>
-      </View>
+      </TouchableOpacity>
 
       {isExpanded && (
         <View style={styles.elementsContainer}>
-          <TouchableOpacity style={styles.addElementButton} onPress={onAddElement}>
-            <Ionicons name="add-circle-outline" size={18} color={colors.tint} />
-            <Text style={[styles.addElementText, { color: colors.tint }]}>Agregar hábito</Text>
-          </TouchableOpacity>
-
           {elements.length === 0 ? (
-            <Text style={[styles.noElementsText, { color: colors.icon + 'CC' }]}>
+            <Text style={[styles.noElementsText, { color: colors.icon }]}>
               No hay hábitos en esta categoría
             </Text>
           ) : (
             elements.map((element) => (
-              <View key={element.id} style={[styles.elementRow, { borderBottomColor: colors.icon + '33' }]}>
+              <View key={element.id} style={[styles.elementRow, { backgroundColor: colors.background }]}>
                 <View style={styles.elementInfo}>
                   {element.icon_name && (
-                    <View style={styles.elementIcon}>{renderIcon(element.icon_name, 20, colors.tint)}</View>
+                    <View style={[styles.elementIconContainer, { backgroundColor: colors.tint + '15' }]}>
+                      {renderIcon(element.icon_name, 18, colors.tint)}
+                    </View>
                   )}
-                  <Text style={[styles.elementName, { color: colors.text }]}>{element.name}</Text>
+                  <Text style={[styles.elementName, { color: colors.text, fontFamily: Fonts?.default }]}>
+                    {element.name}
+                  </Text>
                 </View>
                 <View style={styles.elementActions}>
                   <TouchableOpacity style={styles.iconButton} onPress={() => onEditElement(element)}>
-                    <Ionicons name="create-outline" size={18} color={colors.tint} />
+                    <Ionicons name="pencil" size={16} color={colors.icon} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.iconButton} onPress={() => onDeleteElement(element.id)}>
-                    <Ionicons name="trash-outline" size={18} color="#FF3B30" />
+                    <Ionicons name="trash" size={16} color="#C45C4A" />
                   </TouchableOpacity>
                 </View>
               </View>
             ))
           )}
+
+          <TouchableOpacity style={styles.addElementButton} onPress={onAddElement} activeOpacity={0.7}>
+            <Ionicons name="add" size={18} color={colors.tint} />
+            <Text style={[styles.addElementText, { color: colors.tint, fontFamily: Fonts?.default }]}>
+              Agregar hábito
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>

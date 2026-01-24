@@ -1,28 +1,40 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 24,
-    width: '80%',
+    width: '85%',
     maxWidth: 400,
     maxHeight: '80%',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 20,
+    letterSpacing: -0.3,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+    borderWidth: 0,
+    borderRadius: 12,
+    padding: 14,
     fontSize: 16,
     marginBottom: 20,
   },
@@ -30,18 +42,21 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: 12,
+    marginTop: 8,
   },
   modalButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
   cancelButton: {},
   cancelButtonText: {
     fontWeight: '600',
+    fontSize: 15,
   },
   saveButton: {},
   saveButtonText: {
     fontWeight: '600',
+    fontSize: 15,
   },
 });

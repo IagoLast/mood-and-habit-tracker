@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Colors } from '@/constants/theme';
@@ -12,11 +13,29 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.tabIconSelected,
-        tabBarInactiveTintColor: colors.tabIconDefault,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.icon,
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.icon + '33',
+          backgroundColor: colors.surface,
+          borderTopWidth: 0,
+          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 88 : 64,
+          ...Platform.select({
+            ios: {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: 0.06,
+              shadowRadius: 8,
+            },
+            android: {
+              elevation: 8,
+            },
+          }),
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+          marginTop: 4,
         },
         headerShown: false,
       }}>
@@ -24,28 +43,36 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Hábitos',
-          tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" size={20} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={24} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="stats"
         options={{
           title: 'Estadísticas',
-          tabBarIcon: ({ color }) => <Ionicons name="stats-chart-outline" size={20} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={24} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Ajustes',
-          tabBarIcon: ({ color }) => <Ionicons name="cog-outline" size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'cog' : 'cog-outline'} size={24} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={20} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+          ),
         }}
       />
     </Tabs>

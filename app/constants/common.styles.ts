@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export const commonStyles = StyleSheet.create({
   header: {
@@ -7,7 +7,17 @@ export const commonStyles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     paddingTop: 12,
-    borderBottomWidth: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
   headerTitle: {
     fontSize: 20,
